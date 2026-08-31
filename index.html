@@ -82,13 +82,37 @@
         <div class="state-card"><strong>FF</strong><span>Planner ✗ · Executor ✗</span></div>
       </div>
 
-      <div class="figure-placeholder heatmap-placeholder">
+      <!-- <div class="figure-placeholder heatmap-placeholder">
         <div class="placeholder-title">Attention heatmaps · TT / TF / FT / FF</div>
         <div class="heatmap-grid">
           <div class="heatmap tt"><span>TT</span></div>
           <div class="heatmap tf"><span>TF</span></div>
           <div class="heatmap ft"><span>FT</span></div>
           <div class="heatmap ff"><span>FF</span></div>
+        </div>
+        <div class="axis-label x">Executor generation progress →</div>
+        <div class="axis-label y">Plan relative position ↑</div>
+      </div> -->
+
+      <div class="figure-placeholder heatmap-placeholder">
+        <div class="placeholder-title">Attention heatmaps · TT / TF / FT / FF</div>
+        <div class="heatmap-grid">
+          <div class="heatmap-item">
+            <img src="images/heatmap_tt.png" alt="Attention heatmap - Planner correct, Executor correct">
+            <span>TT</span>
+          </div>
+          <div class="heatmap-item">
+            <img src="images/heatmap_tf.png" alt="Attention heatmap - Planner correct, Executor incorrect">
+            <span>TF</span>
+          </div>
+          <div class="heatmap-item">
+            <img src="images/heatmap_ft.png" alt="Attention heatmap - Planner incorrect, Executor correct">
+            <span>FT</span>
+          </div>
+          <div class="heatmap-item">
+            <img src="images/heatmap_ff.png" alt="Attention heatmap - Planner incorrect, Executor incorrect">
+            <span>FF</span>
+          </div>
         </div>
         <div class="axis-label x">Executor generation progress →</div>
         <div class="axis-label y">Plan relative position ↑</div>
