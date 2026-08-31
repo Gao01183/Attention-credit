@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Mingze Gao — Exploring attention-guided credit assignment in Planner–Executor LLMs." />
+  <title>Attention-Guided Credit Assignment in Planner–Executor LLMs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="nav-wrap">
+      <a class="brand" href="#top">Mingze Gao</a>
+      <nav>
+        <a href="#dynamics">Attention Dynamics</a>
+        <a href="#tokens">Token Influence</a>
+        <a href="#intervention">Intervention</a>
+        <a href="#rl">Credit Assignment</a>
+        <a href="#ongoing">Ongoing</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero section">
+      <div class="eyebrow">Research Project · 2026 · Ongoing</div>
+      <h1>Understanding and Guiding Credit Assignment in Planner–Executor LLMs with Attention</h1>
+      <p class="hero-lede">
+        How can internal attention dynamics reveal which information matters across collaborating LLM agents,
+        and how can those signals be used for fine-grained reinforcement-learning credit assignment?
+      </p>
+      <div class="hero-meta">
+        <span>Mingze Gao</span>
+        <span>Nanjing University · School of Artificial Intelligence</span>
+      </div>
+      <div class="hero-links">
+        <a class="button primary" href="https://github.com/Gao01183/Attention-credit" target="_blank" rel="noreferrer">GitHub</a>
+        <a class="button" href="#method">Explore the project ↓</a>
+      </div>
+
+      <div class="pipeline-card">
+        <div class="pipeline-label">Planner–Executor setting</div>
+        <div class="pipeline">
+          <div class="node">Question</div>
+          <div class="arrow">→</div>
+          <div class="node accent">Planner</div>
+          <div class="arrow">→</div>
+          <div class="node">Plan</div>
+          <div class="arrow">→</div>
+          <div class="node accent">Executor</div>
+          <div class="arrow">→</div>
+          <div class="node">Final Reward</div>
+        </div>
+        <p class="pipeline-caption">The final outcome is observable; the challenge is assigning credit to the right agent and the right parts of its trajectory.</p>
+      </div>
+    </section>
+
+    <section class="section narrow" id="research-question">
+      <div class="section-number">00</div>
+      <h2>Research Question</h2>
+      <p>
+        Outcome-level rewards supervise the final result, but do not directly reveal which agent or which tokens
+        contributed to the outcome. I investigate whether the model’s own attention can expose this hidden structure.
+      </p>
+    </section>
+
+    <section class="section" id="dynamics">
+      <div class="section-number">01</div>
+      <h2>Understanding Planner–Executor Attention Dynamics</h2>
+      <p class="section-intro">
+        Before using attention as a learning signal, I first study how the Executor actually uses the Planner’s output.
+        Trajectories are grouped by Planner and Executor correctness to separate aligned and mismatched interaction states.
+      </p>
+
+      <div class="state-grid">
+        <div class="state-card"><strong>TT</strong><span>Planner ✓ · Executor ✓</span></div>
+        <div class="state-card"><strong>TF</strong><span>Planner ✓ · Executor ✗</span></div>
+        <div class="state-card"><strong>FT</strong><span>Planner ✗ · Executor ✓</span></div>
+        <div class="state-card"><strong>FF</strong><span>Planner ✗ · Executor ✗</span></div>
+      </div>
+
+      <div class="figure-placeholder heatmap-placeholder">
+        <div class="placeholder-title">Attention heatmaps · TT / TF / FT / FF</div>
+        <div class="heatmap-grid">
+          <div class="heatmap tt"><span>TT</span></div>
+          <div class="heatmap tf"><span>TF</span></div>
+          <div class="heatmap ft"><span>FT</span></div>
+          <div class="heatmap ff"><span>FF</span></div>
+        </div>
+        <div class="axis-label x">Executor generation progress →</div>
+        <div class="axis-label y">Plan relative position ↑</div>
+      </div>
+
+      <div class="insight">
+        <div class="insight-tag">Observation</div>
+        <div>
+          <h3>Executor generally tracks the Plan.</h3>
+          <p>
+            All four correctness states show a visible diagonal tracking structure. Even unsuccessful executions do not
+            simply ignore the Planner; failure can arise despite substantial Plan-following behavior.
+          </p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>Alignment</h3>
+          <p>
+            A Diagonal Score measures how closely attention mass follows an idealized Plan-to-Executor diagonal.
+            Planner correctness alone and Executor correctness alone are not sufficient to explain this pattern.
+          </p>
+        </div>
+        <div>
+          <h3>Tracking Dynamics</h3>
+          <p>
+            Centroid and Peak Tracking Error quantify how far the attention focus drifts from the expected execution
+            position. The mismatch conditions TF and FT show larger deviations than TT and FF.
+          </p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><span class="stat-value">p = 0.0104</span><span class="stat-label">Planner × Executor interaction · Diagonal Score</span></div>
+        <div class="stat-card"><span class="stat-value">p = 0.0065</span><span class="stat-label">Planner × Executor interaction · Centroid Tracking Error</span></div>
+        <div class="stat-card"><span class="stat-value">p = 0.0013</span><span class="stat-label">Planner × Executor interaction · Peak Tracking Error</span></div>
+      </div>
+
+      <div class="callout">
+        <strong>Key finding:</strong> Alignment is not the same as correctness. A model can closely follow a Plan that is wrong.
+      </div>
+      <p class="source-note">Attention-dynamics observations and statistics are from the preliminary Planner–Executor study. fileciteturn0file0L28-L43 fileciteturn0file0L80-L94 fileciteturn0file0L154-L161</p>
+    </section>
+
+    <section class="section" id="method">
+      <div class="section-number">02</div>
+      <h2>From Attention Dynamics to Cross-Agent Token Influence</h2>
+      <p class="section-intro">
+        The attention analysis raises a finer-grained question: which Planner tokens does the Executor actually depend on?
+      </p>
+
+      <div class="inspiration-box">
+        <div class="inspiration-title">Prior inspiration</div>
+        <p>
+          This project is inspired by recent work showing that attention dynamics can expose reasoning-critical tokens
+          and support fine-grained policy optimization.
+          <a href="https://arxiv.org/abs/2510.13554" target="_blank" rel="noreferrer">Attention Illuminates LLM Reasoning</a>.
+        </p>
+        <p>
+          The present project studies a different setting: <strong>cross-agent attention in a Planner–Executor architecture</strong>,
+          with a different head-selection criterion and token-scoring procedure.
+        </p>
+      </div>
+
+      <div class="method-flow">
+        <div class="method-step">
+          <div class="method-index">01</div>
+          <h3>Planner-Focused Heads</h3>
+          <p>Select heads according to their aggregated attention mass over the Planner span.</p>
+        </div>
+        <div class="method-connector">↓</div>
+        <div class="method-step">
+          <div class="method-index">02</div>
+          <h3>Cross-Agent Token Influence</h3>
+          <p>Aggregate Executor→Planner attention across selected heads and generation steps for each Planner token.</p>
+        </div>
+        <div class="method-connector">↓</div>
+        <div class="method-step">
+          <div class="method-index">03</div>
+          <h3>Token-Level Weighting</h3>
+          <p>Use high-influence tokens as candidates for stronger policy-gradient weighting during Planner optimization.</p>
+        </div>
+      </div>
+
+      <div class="formula-card">
+        <div class="formula-label">Conceptual pipeline</div>
+        <div class="formula-line"><span>Executor attention</span><span>→</span><span>Planner-focused heads</span><span>→</span><span>Token influence</span><span>→</span><span>Credit weighting</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="intervention">
+      <div class="section-number">03</div>
+      <h2>Do Attention-Selected Tokens Actually Matter?</h2>
+      <p class="section-intro">
+        Attention magnitude alone does not establish causal importance. I therefore use token-level intervention:
+        select important tokens from the original trajectory, mask them without recomputing importance, and measure the
+        effect on a fresh Executor generation.
+      </p>
+
+      <div class="results-header">
+        <div>
+          <div class="result-kicker">GSM8K · Qwen2.5-1.5B-Instruct</div>
+          <h3>Mask intervention</h3>
+        </div>
+      </div>
+
+      <div class="bar-chart">
+        <div class="bar-row"><span>No mask</span><div class="bar-track"><div class="bar-fill" style="width:64.26%"></div></div><strong>64.26%</strong></div>
+        <div class="bar-row"><span>Random mask</span><div class="bar-track"><div class="bar-fill" style="width:54.86%"></div></div><strong>54.86%</strong></div>
+        <div class="bar-row"><span>Low-CATI mask</span><div class="bar-track"><div class="bar-fill" style="width:63.58%"></div></div><strong>63.58%</strong></div>
+        <div class="bar-row"><span class="emph">High-CATI mask</span><div class="bar-track"><div class="bar-fill emph" style="width:50%"></div></div><strong class="emph">50.00%</strong></div>
+        <div class="bar-row"><span>High-CATI retain</span><div class="bar-track"><div class="bar-fill" style="width:64.42%"></div></div><strong>64.42%</strong></div>
+      </div>
+
+      <div class="flip-grid">
+        <div class="flip-card">
+          <div class="flip-label">Originally correct</div>
+          <div class="flip-big">31.25%</div>
+          <div class="flip-detail">High-CATI mask → Correct → Wrong</div>
+          <div class="flip-compare">vs. 3.77% for Low-CATI masking</div>
+        </div>
+        <div class="flip-card">
+          <div class="flip-label">Originally incorrect</div>
+          <div class="flip-big">16.35%</div>
+          <div class="flip-detail">High-CATI mask → Wrong → Correct</div>
+          <div class="flip-compare">vs. 4.88% for Low-CATI masking</div>
+        </div>
+      </div>
+
+      <div class="insight split">
+        <div>
+          <div class="insight-tag">Interpretation</div>
+          <h3>High-influence tokens are consequential.</h3>
+        </div>
+        <div>
+          <p>
+            Masking high-CATI tokens is substantially more disruptive than masking low-CATI or random tokens. This
+            supports the use of cross-agent attention as an <strong>influence / dependency signal</strong>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="usefulness">
+      <div class="section-number">03A</div>
+      <h2>Influence Is Not the Same as Usefulness</h2>
+      <p class="section-intro">
+        The same intervention reveals a second, more subtle pattern: highly attended tokens can be either helpful or harmful.
+      </p>
+
+      <div class="two-col bordered">
+        <div>
+          <div class="mini-stat">7.98%</div>
+          <h3>High attention but harmful</h3>
+          <p>Among the top-attention group, some plans are actively harmful even though the Executor strongly depends on them.</p>
+        </div>
+        <div>
+          <div class="mini-stat">14.02%</div>
+          <h3>Low attention but helpful</h3>
+          <p>Some helpful Plan information is not among the most strongly attended tokens.</p>
+        </div>
+      </div>
+
+      <div class="big-quote">“Cross-agent attention captures dependency, but dependency does not necessarily imply positive contribution.”</div>
+    </section>
+
+    <section class="section" id="rl">
+      <div class="section-number">04</div>
+      <h2>Using Attention for Reinforcement-Learning Credit Assignment</h2>
+      <p class="section-intro">
+        I next tested whether the attention-derived signal could be used to assign finer-grained credit during GRPO training.
+      </p>
+
+      <div class="rl-grid">
+        <div class="rl-card muted">
+          <div class="rl-kicker">Agent-level allocation</div>
+          <div class="rl-title">Attention → Planner / Executor reward split</div>
+          <div class="rl-number">61.49%</div>
+          <p>Directly allocating outcome-level reward according to attention underperformed vanilla GRPO.</p>
+        </div>
+        <div class="rl-card muted">
+          <div class="rl-kicker">Combined</div>
+          <div class="rl-title">Agent-level allocation + token weighting</div>
+          <div class="rl-number">60.27%</div>
+          <p>Adding token-level weighting on top of the agent-level split did not recover the loss.</p>
+        </div>
+        <div class="rl-card highlighted">
+          <div class="rl-kicker">Token-level only</div>
+          <div class="rl-title">Vanilla reward + high-CATI Planner token weighting</div>
+          <div class="rl-number">65.73%</div>
+          <p>Preliminary result: +1.74 points over the 63.99% vanilla GRPO baseline.</p>
+        </div>
+        <div class="rl-card baseline">
+          <div class="rl-kicker">Baseline</div>
+          <div class="rl-title">Vanilla GRPO</div>
+          <div class="rl-number">63.99%</div>
+          <p>Planner and Executor both receive the final outcome reward.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Preliminary takeaway:</strong> The attention signal appears more promising as a token-level credit modulation signal than as a direct agent-level reward allocation rule.
+      </div>
+    </section>
+
+    <section class="section" id="bottleneck">
+      <div class="section-number">05</div>
+      <h2>The Planner–Executor Bottleneck</h2>
+      <p class="section-intro">
+        The intervention studies suggest that Plan quality is a major bottleneck. A useful Plan can substantially improve the
+        Executor, while a noisy Plan can be actively harmful.
+      </p>
+
+      <div class="plan-results">
+        <div class="plan-box"><span>No Plan</span><strong>65.28%</strong></div>
+        <div class="plan-box"><span>Normal Plan</span><strong>64.20%</strong></div>
+        <div class="plan-box oracle"><span>Oracle Plan</span><strong>81.58%</strong></div>
+        <div class="plan-box random"><span>Random Plan</span><strong>21.30%</strong></div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>Large oracle headroom</h3>
+          <p>The difference between no-plan and oracle-plan settings indicates substantial headroom for better planning and better inter-agent communication.</p>
+        </div>
+        <div>
+          <h3>Noisy plans can hurt</h3>
+          <p>The normal Planner currently underperforms the no-plan condition, suggesting that the interface is valuable only when the transmitted information is reliable.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section compact" id="planner-behavior">
+      <div class="section-number">05A</div>
+      <h2>What Happens to the Planner Under RL?</h2>
+      <div class="compact-table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Base Planner</th><th>GRPO Planner</th></tr></thead>
+          <tbody>
+            <tr><td>Forbidden calculation rate</td><td>90.52%</td><td class="warn">95.75%</td></tr>
+            <tr><td>Contains true answer</td><td>61.26%</td><td class="warn">68.39%</td></tr>
+            <tr><td>Explicit equation</td><td>88.17%</td><td class="warn">93.18%</td></tr>
+            <tr><td>Plan logic correctness*</td><td>73%</td><td class="warn">65%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small-note">* Preliminary API-assisted evaluation on the first 100 samples.</p>
+      <p>
+        Rather than clearly becoming a cleaner planner, the trained Planner increasingly exposes calculations and answers.
+        This suggests a possible shortcut pressure from outcome-only supervision.
+      </p>
+    </section>
+
+    <section class="section" id="understanding">
+      <div class="section-number">06</div>
+      <h2>Current Understanding</h2>
+      <div class="storyline">
+        <div class="story-step"><span>01</span><p>Attention between Planner and Executor is structured.</p></div>
+        <div class="story-step"><span>02</span><p>Correctness mismatch is associated with attention-tracking deviation.</p></div>
+        <div class="story-step"><span>03</span><p>Cross-agent attention can identify influential Planner tokens.</p></div>
+        <div class="story-step"><span>04</span><p>Influence does not automatically imply usefulness.</p></div>
+        <div class="story-step"><span>05</span><p>Token-level credit appears more promising than naive agent-level attention allocation.</p></div>
+        <div class="story-step"><span>06</span><p>Planner quality remains a major bottleneck for the current weak-model setting.</p></div>
+      </div>
+    </section>
+
+    <section class="section final-section" id="ongoing">
+      <div class="section-number">07</div>
+      <h2>Ongoing Work</h2>
+      <p class="big-question">How can attention-derived influence be converted into reliable reinforcement-learning credit?</p>
+      <div class="ongoing-grid">
+        <div><strong>01</strong><span>More robust cross-agent token importance</span></div>
+        <div><strong>02</strong><span>Separating dependency from beneficial contribution</span></div>
+        <div><strong>03</strong><span>More principled credit assignment across Planner–Executor interactions</span></div>
+        <div><strong>04</strong><span>Validation across models, seeds, and tasks</span></div>
+      </div>
+      <p class="footer-note">This project is ongoing. Results and analyses will be updated as the study develops.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>© 2026 Mingze Gao</div>
+    <div class="footer-links">
+      <a href="https://github.com/Gao01183/Attention-credit" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://arxiv.org/abs/2510.13554" target="_blank" rel="noreferrer">Prior inspiration</a>
+    </div>
+  </footer>
+</body>
+</html>
