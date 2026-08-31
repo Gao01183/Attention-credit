@@ -106,21 +106,48 @@ p { color: #475467; margin: 0 0 18px; }
 .state-card strong { display: block; font-size: 1.25rem; }
 .state-card span { font-size: .85rem; color: var(--muted); }
 
+/* ---------- Attention heatmap figure ---------- */
 .figure-placeholder { position: relative; margin-top: 34px; border: 1px solid var(--line); border-radius: 20px; padding: 24px; background: #fbfcfe; }
 .placeholder-title { font-weight: 700; margin-bottom: 22px; }
-.heatmap-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
-.heatmap { height: 240px; border-radius: 14px; position: relative; overflow: hidden; display: grid; place-items: center; border: 1px solid #e4e7ec; background:
-  repeating-linear-gradient(135deg, rgba(47,91,234,.05) 0 14px, rgba(47,91,234,.18) 15px 19px, rgba(47,91,234,.04) 20px 34px),
-  linear-gradient(180deg,#fff,#eef2f8); }
-.heatmap.tf, .heatmap.ft { background:
-  radial-gradient(circle at 30% 65%, rgba(47,91,234,.28), transparent 25%),
-  radial-gradient(circle at 75% 35%, rgba(47,91,234,.21), transparent 28%),
-  repeating-linear-gradient(135deg, rgba(47,91,234,.04) 0 18px, rgba(47,91,234,.14) 19px 23px, rgba(47,91,234,.03) 24px 38px),
-  #fff; }
-.heatmap span { font-weight: 700; background: rgba(255,255,255,.8); border: 1px solid #d0d5dd; padding: 6px 10px; border-radius: 999px; }
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 14px;
+}
+
+.heatmap-item {
+  position: relative;
+  height: 240px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e4e7ec;
+  background: #eef2f8;
+}
+
+.heatmap-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;   /* keeps the real image ratio intact, no stretching */
+  display: block;
+}
+
+.heatmap-item span {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  font-weight: 700;
+  background: rgba(255,255,255,.85);
+  border: 1px solid #d0d5dd;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: .85rem;
+}
+
 .axis-label { color: #98a2b3; font-size: .72rem; }
 .axis-label.x { text-align: center; margin-top: 12px; }
 .axis-label.y { position: absolute; left: 8px; top: 50%; transform: rotate(-90deg) translateX(-50%); transform-origin: left top; }
+/* ---------- end heatmap figure ---------- */
 
 .insight { margin-top: 34px; padding: 26px; border: 1px solid #dfe3ea; border-radius: 18px; display: grid; grid-template-columns: 140px 1fr; gap: 20px; background: #fff; }
 .insight.split { grid-template-columns: 1fr 1fr; }
