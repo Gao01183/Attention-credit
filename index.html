@@ -66,6 +66,23 @@
         which parts of an agent’s trajectory—contributed to it. I investigate whether internal attention
         can reveal this hidden interaction structure and provide a finer-grained signal for credit assignment.
       </p>
+
+      <div class="motivation-box">
+        <div class="motivation-title">Why this project exists</div>
+        <p>
+          An earlier version of this project tried to allocate outcome-level reward directly according to
+          attention weights between the Planner and Executor. This ran into a structural problem: because
+          attention weights are strictly positive, the two agents were always assigned reward of the same sign.
+          In a case like Planner-wrong-but-Executor-right (FT), the outcome reward is positive, so a naive
+          attention-weighted split would still give the Planner positive reward—even though its contribution
+          was arguably negative.
+        </p>
+        <p>
+          This mismatch motivated stepping back from reward allocation and first asking a more basic question:
+          what do attention patterns between Planner and Executor actually look like when the two agents
+          succeed or fail together, versus when their outcomes diverge?
+        </p>
+      </div>
     </section>
 
     <section class="section" id="dynamics">
@@ -126,7 +143,10 @@
           <p>
             The Diagonal Score measures how closely the aggregated attention mass follows an idealized
             Plan-to-Executor diagonal. Neither Planner correctness nor Executor correctness alone fully explains
-            the variation in alignment; their interaction is more informative.
+            the variation in alignment; their interaction is more informative. The pattern runs in a specific
+            direction: alignment is lowest when the Executor successfully self-corrects away from an incorrect
+            Plan (FT, 0.763) and highest when the Executor mechanically follows an incorrect Plan into the same
+            wrong answer (FF, 0.784).
           </p>
         </div>
         <div>
@@ -144,11 +164,41 @@
         <div class="stat-card"><span class="stat-value">p = 0.0065</span><span class="stat-label">Planner × Executor interaction · Centroid Tracking Error</span></div>
         <div class="stat-card"><span class="stat-value">p = 0.0013</span><span class="stat-label">Planner × Executor interaction · Peak Tracking Error</span></div>
       </div>
+      <p class="small-note">These interaction effects are statistically significant but modest in size (partial η² ≈ 0.01–0.03) — a real but subtle effect, not a large one.</p>
 
       <div class="callout">
         <strong>Key finding:</strong> Attention alignment is not equivalent to correctness. An Executor can closely follow a Plan that is itself incorrect.
       </div>
-      <p class="source-note">Preliminary Planner–Executor attention analysis on Qwen2.5-1.5B-Instruct.</p>
+
+      <div class="insight split" style="margin-top:34px;">
+        <div>
+          <div class="insight-tag">Additional signal</div>
+          <h3>Mismatch conditions show more concentrated attention.</h3>
+        </div>
+        <div>
+          <p>
+            A complementary measure—Plan Attention Entropy—captures whether the Executor’s attention spreads
+            across the Plan or concentrates in a few positions, computed as the normalized entropy of attention
+            mass across 20 relative bins of the Plan. Unlike the tracking-error metrics above, this measure
+            shows a significant Planner main effect (p = 0.0044) in addition to the Planner × Executor
+            interaction (p = 0.0073, partial η² ≈ 0.02–0.03) — the cleanest statistical signal in this analysis.
+          </p>
+        </div>
+      </div>
+
+      <div class="figure-placeholder">
+        <div class="placeholder-title">Plan Attention Entropy · interaction plot</div>
+        <img class="single-figure" src="images/entropy_interaction.png" alt="Interaction plot of normalized Plan attention entropy across Planner and Executor correctness">
+      </div>
+
+      <p class="section-intro" style="margin-top:24px;">
+        Mismatch conditions (TF, FT) show lower entropy than matched conditions (TT, FF) — attention appears
+        more concentrated, not more spread out, when Planner and Executor correctness diverge. One reading is
+        that under mismatch the Executor may fail to explore other parts of the Plan; this interpretation is
+        preliminary and needs further validation.
+      </p>
+
+      <p class="source-note">Preliminary Planner–Executor attention analysis on Qwen2.5-1.5B-Instruct (middle layers 9–18; 320 trajectories across four correctness states), aggregated over the top 30% of heads by cumulative attention to the Plan span (“global heads”).</p>
     </section>
 
     <section class="section" id="method">
@@ -177,7 +227,7 @@
         <div class="method-step">
           <div class="method-index">01</div>
           <h3>Planner-Focused Heads</h3>
-          <p>Select the attention heads with the highest aggregated attention to the Planner span, focusing subsequent analysis on heads most responsive to cross-agent Planner information.</p>
+          <p>Select the top 30% of attention heads by aggregated attention to the Planner span (“global heads”), focusing subsequent analysis on heads most responsive to cross-agent Planner information.</p>
         </div>
         <div class="method-connector">↓</div>
         <div class="method-step">
@@ -290,7 +340,7 @@
           <div class="rl-kicker">Agent-level allocation</div>
           <div class="rl-title">Attention → Planner / Executor reward split</div>
           <div class="rl-number">61.49%</div>
-          <p>Directly allocating outcome-level reward according to attention underperformed the vanilla GRPO baseline in the current setting.</p>
+          <p>Directly allocating outcome-level reward according to attention underperformed the vanilla GRPO baseline in the current setting — consistent with the sign-mismatch problem noted earlier for FT/TF trajectories, where positive-only attention weights cannot assign reward of the correct sign to each agent.</p>
         </div>
         <div class="rl-card muted">
           <div class="rl-kicker">Combined</div>
