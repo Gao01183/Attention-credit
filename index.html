@@ -29,7 +29,7 @@
       <div class="eyebrow">Research Project · 2026 · Ongoing</div>
       <h1>Understanding and Guiding Credit Assignment in Planner–Executor LLMs with Attention</h1>
       <p class="hero-lede">
-        How can internal attention reveal what information an LLM agent relies on, and can this signal support
+        How can attention patterns reveal what information an LLM agent relies on, and can this signal support
         finer-grained credit assignment in multi-agent reasoning?
       </p>
       <div class="hero-meta">
@@ -63,7 +63,7 @@
       <h2>Research Question</h2>
       <p>
         Outcome-level rewards supervise the final outcome, but provide limited information about which agent—or
-        which parts of an agent’s trajectory—were responsible for it. I investigate whether internal attention
+        which parts of an agent’s trajectory—contributed to it. I investigate whether internal attention
         can reveal this hidden interaction structure and provide a finer-grained signal for credit assignment.
       </p>
     </section>
@@ -73,8 +73,8 @@
       <h2>Understanding Planner–Executor Attention Dynamics</h2>
       <p class="section-intro">
         Before using attention as a learning signal, I first study how the Executor uses the Planner’s output.
-        I categorize trajectories by Planner and Executor correctness to examine how attention patterns change
-        when the two agents succeed or fail together—and when their outcomes diverge.
+        I categorize trajectories by Planner and Executor correctness to examine how attention patterns differ
+        when the two agents succeed or fail together, and when their outcomes diverge.
       </p>
 
       <div class="state-grid">
@@ -115,7 +115,7 @@
           <p>
             Across all four correctness states, the Executor exhibits a visible diagonal tracking pattern over the
             Planner’s output. Even unsuccessful executions do not simply ignore the Plan, suggesting that execution
-            failure can occur despite substantial Plan-following behavior.
+            failure can occur despite clear Plan-tracking behavior.
           </p>
         </div>
       </div>
@@ -126,15 +126,15 @@
           <p>
             The Diagonal Score measures how closely the aggregated attention mass follows an idealized
             Plan-to-Executor diagonal. Neither Planner correctness nor Executor correctness alone fully explains
-            the observed alignment pattern.
+            the variation in alignment; their interaction is more informative.
           </p>
         </div>
         <div>
           <h3>Tracking Dynamics</h3>
           <p>
             Centroid and Peak Tracking Error measure how far the Executor’s attention focus deviates from its
-            expected position along the Plan. The mismatch conditions, TF and FT, exhibit larger tracking
-            deviations than TT and FF.
+            expected position along the Plan. The mismatched conditions, TF and FT, exhibit larger tracking
+            deviations than the matched conditions, TT and FF.
           </p>
         </div>
       </div>
@@ -169,7 +169,7 @@
         <p>
           My study focuses on a different setting: <strong>cross-agent attention in a Planner–Executor system</strong>.
           The head-selection criterion and token-scoring procedure are designed for this setting and differ from
-          the mechanisms used in the prior work.
+          the head grouping and token-scoring mechanisms used in the prior work.
         </p>
       </div>
 
@@ -177,7 +177,7 @@
         <div class="method-step">
           <div class="method-index">01</div>
           <h3>Planner-Focused Heads</h3>
-          <p>Select attention heads according to their aggregated attention mass over the Planner span, retaining the heads most focused on cross-agent Planner information.</p>
+          <p>Select the attention heads with the highest aggregated attention to the Planner span, focusing subsequent analysis on heads most responsive to cross-agent Planner information.</p>
         </div>
         <div class="method-connector">↓</div>
         <div class="method-step">
@@ -222,6 +222,7 @@
         <div class="bar-row"><span class="emph">High-CATI mask</span><div class="bar-track"><div class="bar-fill emph" style="width:50%"></div></div><strong class="emph">50.00%</strong></div>
         <div class="bar-row"><span>High-CATI retain</span><div class="bar-track"><div class="bar-fill" style="width:64.42%"></div></div><strong>64.42%</strong></div>
       </div>
+      <p class="small-note">“Retain” conditions keep only the specified tokens (e.g. high-CATI) visible to the Executor and mask the rest, as a complementary check to the mask conditions above.</p>
 
       <div class="flip-grid">
         <div class="flip-card">
@@ -264,12 +265,12 @@
       <div class="two-col bordered">
         <div>
           <div class="mini-stat">7.98%</div>
-          <h3>High attention but harmful</h3>
-          <p>Among the top-attention group, some plans are actively harmful even though the Executor strongly depends on them.</p>
+          <h3>High-CATI but harmful</h3>
+          <p>Among the high-CATI cases, some highly attended Plan information is actively harmful even though the Executor strongly depends on it.</p>
         </div>
         <div>
           <div class="mini-stat">14.02%</div>
-          <h3>Low attention but helpful</h3>
+          <h3>Low-CATI but helpful</h3>
           <p>Some helpful Plan information is not among the most strongly attended tokens.</p>
         </div>
       </div>
@@ -295,7 +296,7 @@
           <div class="rl-kicker">Combined</div>
           <div class="rl-title">Agent-level allocation + token weighting</div>
           <div class="rl-number">60.27%</div>
-          <p>Adding token-level weighting on top of the agent-level allocation did not recover the performance drop.</p>
+          <p>Adding token-level weighting on top of the agent-level allocation did not recover the performance lost under agent-level allocation.</p>
         </div>
         <div class="rl-card highlighted">
           <div class="rl-kicker">Token-level only</div>
@@ -333,12 +334,12 @@
 
       <div class="two-col">
         <div>
-          <h3>Large oracle headroom</h3>
+          <h3>Substantial oracle headroom</h3>
           <p>The gap between the no-plan and oracle-plan settings reveals substantial headroom for improving planning and inter-agent communication.</p>
         </div>
         <div>
           <h3>Noisy plans can hurt</h3>
-          <p>The normal Planner currently underperforms the no-plan condition, suggesting that the interface is valuable only when the transmitted information is reliable.</p>
+          <p>The normal Planner currently underperforms the no-plan condition, suggesting that the value of the interface depends strongly on the reliability of the transmitted information.</p>
         </div>
       </div>
     </section>
@@ -370,7 +371,7 @@
       <div class="storyline">
         <div class="story-step"><span>01</span><p>Attention between Planner and Executor exhibits structured interaction patterns.</p></div>
         <div class="story-step"><span>02</span><p>Planner–Executor correctness mismatch is associated with deviations in the Executor’s attention trajectory.</p></div>
-        <div class="story-step"><span>03</span><p>Cross-agent attention can identify Planner tokens that strongly influence downstream execution.</p></div>
+        <div class="story-step"><span>03</span><p>Cross-agent attention can identify Planner tokens associated with strong downstream influence.</p></div>
         <div class="story-step"><span>04</span><p>Influence does not necessarily imply usefulness.</p></div>
         <div class="story-step"><span>05</span><p>Token-level credit appears more promising than naive agent-level attention allocation in the current experiments.</p></div>
         <div class="story-step"><span>06</span><p>Planner quality remains a major bottleneck in the current experimental setting.</p></div>
@@ -383,7 +384,7 @@
       <p class="big-question">How can attention-derived influence be converted into reliable reinforcement-learning credit?</p>
       <div class="ongoing-grid">
         <div><strong>01</strong><span>More robust cross-agent token importance</span></div>
-        <div><strong>02</strong><span>Separating dependency from contribution quality</span></div>
+        <div><strong>02</strong><span>Separating attention-based dependency from contribution quality</span></div>
         <div><strong>03</strong><span>More principled credit assignment across Planner–Executor interactions</span></div>
         <div><strong>04</strong><span>Validation across models, seeds, and tasks</span></div>
       </div>
