@@ -57,6 +57,32 @@ nav a:hover { color: var(--ink); }
 }
 .section.narrow { width: min(860px, calc(100% - 40px)); }
 .section.compact { padding-top: 75px; padding-bottom: 75px; }
+
+/* Subsections (e.g. "Influence Is Not the Same as Usefulness", "What Happens to the
+   Planner Under RL?") are nested inside a parent topic rather than numbered as their
+   own top-level chapter. */
+.section.subsection {
+  padding-top: 70px;
+  padding-bottom: 70px;
+}
+.sub-heading {
+  font-family: var(--serif);
+  font-size: clamp(1.7rem, 3vw, 2.3rem);
+  line-height: 1.15;
+  margin-bottom: 22px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.sub-heading::before {
+  content: "";
+  display: block;
+  width: 44px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+
 .eyebrow, .result-kicker, .section-number, .pipeline-label, .inspiration-title,
 .insight-tag, .rl-kicker, .method-index, .flip-label, .stat-label, .small-note,
 .footer-note { text-transform: uppercase; letter-spacing: .09em; font-size: .74rem; }
@@ -154,10 +180,13 @@ p { color: #475467; margin: 0 0 18px; }
 .insight-tag { color: var(--accent); font-weight: 700; }
 .two-col { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 40px; margin-top: 36px; }
 .two-col.bordered > div { border: 1px solid var(--line); border-radius: 18px; padding: 26px; }
-.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 34px; }
-.stat-card { padding: 22px; background: var(--soft); border-radius: 16px; }
-.stat-value { font-size: 1.3rem; font-weight: 700; display: block; margin-bottom: 8px; }
-.stat-label { color: var(--muted); text-transform: none; letter-spacing: 0; font-size: .84rem; }
+
+/* p-value cards: kept as supporting evidence, visually quieter than the headline
+   percentage results elsewhere on the page (oracle plan, mask intervention, RL). */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 34px; }
+.stat-card { padding: 16px 18px; background: var(--soft); border-radius: 14px; }
+.stat-value { font-size: 1rem; font-weight: 600; display: block; margin-bottom: 6px; color: #475467; }
+.stat-label { color: var(--muted); text-transform: none; letter-spacing: 0; font-size: .82rem; }
 .callout { margin-top: 34px; padding: 18px 20px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 10px; color: #25335e; }
 .source-note { font-size: .75rem; color: #98a2b3; margin-top: 18px; }
 
