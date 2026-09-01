@@ -140,22 +140,21 @@ p { color: #475467; margin: 0 0 18px; }
   display: grid;
   grid-template-columns: repeat(2, minmax(0,1fr));
   gap: 14px;
+  align-items: start;
 }
 
 .heatmap-item {
   position: relative;
-  height: 240px;
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid #e4e7ec;
-  background: #eef2f8;
+  background: #fff;
 }
 
 .heatmap-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;   /* keeps the real image ratio intact, no stretching */
   display: block;
+  width: 100%;
+  height: auto;
 }
 
 .heatmap-item span {
@@ -180,7 +179,7 @@ p { color: #475467; margin: 0 0 18px; }
 .figure-placeholder .single-figure {
   display: block;
   width: 100%;
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto;
   border-radius: 14px;
   border: 1px solid #e4e7ec;
