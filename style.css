@@ -201,6 +201,42 @@ p { color: #475467; margin: 0 0 18px; }
 .callout { margin-top: 34px; padding: 18px 20px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 10px; color: #25335e; }
 .source-note { font-size: .75rem; color: #98a2b3; margin-top: 18px; }
 
+/* Collapsible formal definitions: kept closed by default so the page reads as a research
+   narrative first; opens into a KaTeX-rendered formula for readers who want the precise
+   definition of a metric. Visually a quieter, lighter echo of the dark .formula-card. */
+.formula-details { margin-top: 16px; }
+.formula-details summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--muted);
+  font-size: .84rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+.formula-details summary::-webkit-details-marker { display: none; }
+.formula-details summary::before {
+  content: "▸";
+  font-size: .7rem;
+  color: var(--accent);
+  transition: transform .15s ease;
+}
+.formula-details[open] summary::before { transform: rotate(90deg); }
+.formula-details summary:hover { color: var(--ink); }
+.formula-box {
+  margin-top: 12px;
+  padding: 18px 20px;
+  background: #f7f8fa;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow-x: auto;
+}
+.formula-tex { font-size: .95rem; }
+.formula-tex + .formula-tex { margin-top: 10px; }
+.formula-note { margin: 12px 0 0; font-size: .8rem; color: var(--muted); }
+
 .inspiration-box { margin-top: 32px; padding: 22px; border: 1px solid #dce3f6; border-radius: 18px; background: #f8faff; }
 .inspiration-title { color: var(--accent); font-weight: 700; margin-bottom: 10px; }
 .inspiration-box a { color: #2948b9; font-weight: 600; }

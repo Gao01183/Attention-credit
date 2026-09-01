@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -148,6 +149,13 @@
             Plan (FT, 0.763) and highest when the Executor mechanically follows an incorrect Plan into the same
             wrong answer (FF, 0.784).
           </p>
+          <details class="formula-details">
+            <summary>View formal definition</summary>
+            <div class="formula-box">
+              <div class="formula-tex">$$\text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1}\sum_{j=0}^{N-1} H_{i,j}\left|\frac{i}{M-1}-\frac{j}{N-1}\right|}{\sum_{i=0}^{M-1}\sum_{j=0}^{N-1} H_{i,j}}$$</div>
+              <p class="formula-note">H ∈ R<sup>M×N</sup> is the attention heatmap; M is the number of Plan tokens, N is the number of Executor generation steps.</p>
+            </div>
+          </details>
         </div>
         <div>
           <h3>Tracking Dynamics</h3>
@@ -156,6 +164,14 @@
             expected position along the Plan. The mismatched conditions, TF and FT, exhibit larger tracking
             deviations than the matched conditions, TT and FF.
           </p>
+          <details class="formula-details">
+            <summary>View formal definitions</summary>
+            <div class="formula-box">
+              <div class="formula-tex">$$\text{TE}_{\text{centroid}} = \frac{1}{N}\sum_{j=0}^{N-1}\left|\frac{\sum_{i=0}^{M-1} i \cdot H_{i,j}}{(M-1)\sum_{i=0}^{M-1} H_{i,j}} - \frac{j}{N-1}\right|$$</div>
+              <div class="formula-tex">$$\text{TE}_{\text{peak}} = \frac{1}{N}\sum_{j=0}^{N-1}\left|\frac{\arg\max_i H_{i,j}}{M-1} - \frac{j}{N-1}\right|$$</div>
+              <p class="formula-note">Centroid error uses the attention-weighted mean position at each step; Peak error uses the single highest-attention position at each step, relative to the ideal diagonal.</p>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -183,6 +199,13 @@
             shows a significant Planner main effect (p = 0.0044) in addition to the Planner × Executor
             interaction (p = 0.0073, partial η² ≈ 0.02–0.03) — the cleanest statistical signal in this analysis.
           </p>
+          <details class="formula-details">
+            <summary>View formal definition</summary>
+            <div class="formula-box">
+              <div class="formula-tex">$$H_{\text{ent}} = -\sum_{k=1}^{K} p_k \ln(p_k + \epsilon), \qquad p_k = \frac{\sum_{i \in \text{bin}_k} a_i}{\sum_m a_m}$$</div>
+              <p class="formula-note">The Plan is split into K = 20 relative-position bins; a<sub>i</sub> is the attention mass on Plan token i, p<sub>k</sub> is the share of total attention mass in bin k, and ε = 10⁻¹² avoids the zero-log case.</p>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -449,5 +472,15 @@
       <a href="https://arxiv.org/abs/2510.13554" target="_blank" rel="noreferrer">Prior inspiration</a>
     </div>
   </footer>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      renderMathInElement(document.body, {
+        delimiters: [{ left: "$$", right: "$$", display: true }],
+        throwOnError: false
+      });
+    });
+  </script>
 </body>
 </html>
