@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <!-- 外部样式表 -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -37,9 +38,13 @@
         <span>Mingze Gao</span>
         <span>Nanjing University · School of Artificial Intelligence</span>
       </div>
+      <!-- [FIX 4] 新增导师信息 -->
+      <div class="hero-advisors">
+        With guidance from Junbo Li and Peihao Wang, UT Austin
+      </div>
       <div class="hero-links">
         <a class="button primary" href="https://github.com/Gao01183/Attention-credit" target="_blank" rel="noreferrer">GitHub</a>
-        <a class="button" href="#method">Explore the project ↓</a>
+        <a class="button" href="#dynamics">Explore the project ↓</a>
       </div>
 
       <div class="pipeline-card">
@@ -64,10 +69,9 @@
       <h2>Research Question</h2>
       <p>
         Outcome-level rewards supervise the final outcome, but provide limited information about which agent—or
-        which parts of an agent’s trajectory—contributed to it. I investigate whether internal attention
+        which parts of an agent's trajectory—contributed to it. I investigate whether internal attention
         can reveal this hidden interaction structure and provide a finer-grained signal for credit assignment.
       </p>
-
       <div class="motivation-box">
         <div class="motivation-title">Why this project exists</div>
         <p>
@@ -90,7 +94,7 @@
       <div class="section-number">01</div>
       <h2>Understanding Planner–Executor Attention Dynamics</h2>
       <p class="section-intro">
-        Before using attention as a learning signal, I first study how the Executor uses the Planner’s output.
+        Before using attention as a learning signal, I first study how the Executor uses the Planner's output.
         I categorize trajectories by Planner and Executor correctness to examine how attention patterns differ
         when the two agents succeed or fail together, and when their outcomes diverge.
       </p>
@@ -106,19 +110,19 @@
         <div class="placeholder-title">Attention heatmaps · TT / TF / FT / FF</div>
         <div class="heatmap-grid">
           <div class="heatmap-item">
-            <img src="images/heatmap_tt.png" alt="Attention heatmap - Planner correct, Executor correct">
+            <img src="images/heatmap_tt.png" alt="Attention heatmap - Planner correct, Executor correct" loading="lazy">
             <span>TT</span>
           </div>
           <div class="heatmap-item">
-            <img src="images/heatmap_tf.png" alt="Attention heatmap - Planner correct, Executor incorrect">
+            <img src="images/heatmap_tf.png" alt="Attention heatmap - Planner correct, Executor incorrect" loading="lazy">
             <span>TF</span>
           </div>
           <div class="heatmap-item">
-            <img src="images/heatmap_ft.png" alt="Attention heatmap - Planner incorrect, Executor correct">
+            <img src="images/heatmap_ft.png" alt="Attention heatmap - Planner incorrect, Executor correct" loading="lazy">
             <span>FT</span>
           </div>
           <div class="heatmap-item">
-            <img src="images/heatmap_ff.png" alt="Attention heatmap - Planner incorrect, Executor incorrect">
+            <img src="images/heatmap_ff.png" alt="Attention heatmap - Planner incorrect, Executor incorrect" loading="lazy">
             <span>FF</span>
           </div>
         </div>
@@ -132,7 +136,7 @@
           <h3>Executor generally tracks the Plan.</h3>
           <p>
             Across all four correctness states, the Executor exhibits a visible diagonal tracking pattern over the
-            Planner’s output. Even unsuccessful executions do not simply ignore the Plan, suggesting that execution
+            Planner's output. Even unsuccessful executions do not simply ignore the Plan, suggesting that execution
             failure can occur despite clear Plan-tracking behavior.
           </p>
         </div>
@@ -160,7 +164,7 @@
         <div>
           <h3>Tracking Dynamics</h3>
           <p>
-            Centroid and Peak Tracking Error measure how far the Executor’s attention focus deviates from its
+            Centroid and Peak Tracking Error measure how far the Executor's attention focus deviates from its
             expected position along the Plan. The mismatched conditions, TF and FT, exhibit larger tracking
             deviations than the matched conditions, TT and FF.
           </p>
@@ -193,7 +197,7 @@
         </div>
         <div>
           <p>
-            A complementary measure—Plan Attention Entropy—captures whether the Executor’s attention spreads
+            A complementary measure—Plan Attention Entropy—captures whether the Executor's attention spreads
             across the Plan or concentrates in a few positions, computed as the normalized entropy of attention
             mass across 20 relative bins of the Plan. Unlike the tracking-error metrics above, this measure
             shows a significant Planner main effect (p = 0.0044) in addition to the Planner × Executor
@@ -209,22 +213,23 @@
         </div>
       </div>
 
-      <div class="figure-placeholder">
-        <div class="placeholder-title">Plan Attention Entropy · interaction plot</div>
-        <img class="single-figure" src="images/entropy_interaction.png" alt="Interaction plot of normalized Plan attention entropy across Planner and Executor correctness">
+      <!-- [FIX 3] Entropy 图缩小 + 与解释文字并排 -->
+      <div class="figure-text-row">
+        <img class="single-figure" src="images/entropy_interaction.png" alt="Interaction plot of normalized Plan attention entropy across Planner and Executor correctness" loading="lazy">
+        <div class="figure-text">
+          <p class="section-intro" style="margin-top:0;">
+            Mismatch conditions (TF, FT) show lower entropy than matched conditions (TT, FF) — attention appears
+            more concentrated, not more spread out, when Planner and Executor correctness diverge. One reading is
+            that under mismatch the Executor may fail to explore other parts of the Plan; this interpretation is
+            preliminary and needs further validation.
+          </p>
+        </div>
       </div>
 
-      <p class="section-intro" style="margin-top:24px;">
-        Mismatch conditions (TF, FT) show lower entropy than matched conditions (TT, FF) — attention appears
-        more concentrated, not more spread out, when Planner and Executor correctness diverge. One reading is
-        that under mismatch the Executor may fail to explore other parts of the Plan; this interpretation is
-        preliminary and needs further validation.
-      </p>
-
-      <p class="source-note">Preliminary Planner–Executor attention analysis on Qwen2.5-1.5B-Instruct (middle layers 9–18; 320 trajectories across four correctness states), aggregated over the top 30% of heads by cumulative attention to the Plan span (“global heads”).</p>
+      <p class="source-note">Preliminary Planner–Executor attention analysis on Qwen2.5-1.5B-Instruct (middle layers 9–18; 320 trajectories across four correctness states), aggregated over the top 30% of heads by cumulative attention to the Plan span ("global heads").</p>
     </section>
 
-    <section class="section" id="method">
+    <section class="section" id="tokens">
       <div class="section-number">02</div>
       <h2>From Attention Dynamics to Cross-Agent Token Influence</h2>
       <p class="section-intro">
@@ -250,7 +255,7 @@
         <div class="method-step">
           <div class="method-index">01</div>
           <h3>Planner-Focused Heads</h3>
-          <p>Select the top 30% of attention heads by aggregated attention to the Planner span (“global heads”), focusing subsequent analysis on heads most responsive to cross-agent Planner information.</p>
+          <p>Select the top 30% of attention heads by aggregated attention to the Planner span ("global heads"), focusing subsequent analysis on heads most responsive to cross-agent Planner information.</p>
         </div>
         <div class="method-connector">↓</div>
         <div class="method-step">
@@ -295,7 +300,7 @@
         <div class="bar-row"><span class="emph">High-CATI mask</span><div class="bar-track"><div class="bar-fill emph" style="width:50%"></div></div><strong class="emph">50.00%</strong></div>
         <div class="bar-row"><span>High-CATI retain</span><div class="bar-track"><div class="bar-fill" style="width:64.42%"></div></div><strong>64.42%</strong></div>
       </div>
-      <p class="small-note">“Retain” conditions keep only the specified tokens (e.g. high-CATI) visible to the Executor and mask the rest, as a complementary check to the mask conditions above.</p>
+      <p class="small-note">"Retain" conditions keep only the specified tokens (e.g. high-CATI) visible to the Executor and mask the rest, as a complementary check to the mask conditions above.</p>
 
       <div class="flip-grid">
         <div class="flip-card">
@@ -348,7 +353,7 @@
         </div>
       </div>
 
-      <div class="big-quote">“Cross-agent attention captures dependency, but dependency does not necessarily imply positive contribution.”</div>
+      <div class="big-quote">"Cross-agent attention captures dependency, but dependency does not necessarily imply positive contribution."</div>
     </section>
 
     <section class="section" id="rl">
@@ -443,7 +448,7 @@
       <h2>Current Understanding</h2>
       <div class="storyline">
         <div class="story-step"><span>01</span><p>Attention between Planner and Executor exhibits structured interaction patterns.</p></div>
-        <div class="story-step"><span>02</span><p>Planner–Executor correctness mismatch is associated with deviations in the Executor’s attention trajectory.</p></div>
+        <div class="story-step"><span>02</span><p>Planner–Executor correctness mismatch is associated with deviations in the Executor's attention trajectory.</p></div>
         <div class="story-step"><span>03</span><p>Cross-agent attention can identify Planner tokens associated with strong downstream influence.</p></div>
         <div class="story-step"><span>04</span><p>Influence does not necessarily imply usefulness.</p></div>
         <div class="story-step"><span>05</span><p>Token-level credit appears more promising than naive agent-level attention allocation in the current experiments.</p></div>
@@ -472,6 +477,7 @@
       <a href="https://arxiv.org/abs/2510.13554" target="_blank" rel="noreferrer">Prior inspiration</a>
     </div>
   </footer>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
   <script>
@@ -480,6 +486,20 @@
         delimiters: [{ left: "$$", right: "$$", display: true }],
         throwOnError: false
       });
+
+      // [FIX 2] 导航高亮：滚动时自动标记当前章节
+      const sections = document.querySelectorAll('section[id]');
+      const navLinks = document.querySelectorAll('nav a[href^="#"]');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            navLinks.forEach(link => link.classList.remove('active'));
+            const activeLink = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+            if (activeLink) activeLink.classList.add('active');
+          }
+        });
+      }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+      sections.forEach(section => observer.observe(section));
     });
   </script>
 </body>

@@ -23,6 +23,11 @@ body {
 }
 a { color: inherit; }
 
+/* [FIX 2] 导航锚点滚动偏移补偿 */
+section[id] {
+  scroll-margin-top: 80px;
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -46,8 +51,8 @@ a { color: inherit; }
   letter-spacing: -.02em;
 }
 nav { display: flex; flex-wrap: wrap; gap: 18px; }
-nav a { text-decoration: none; color: var(--muted); font-size: .9rem; }
-nav a:hover { color: var(--ink); }
+nav a { text-decoration: none; color: var(--muted); font-size: .9rem; transition: color .15s; }
+nav a:hover, nav a.active { color: var(--accent); }
 
 .section {
   width: min(var(--max), calc(100% - 40px));
@@ -57,14 +62,8 @@ nav a:hover { color: var(--ink); }
 }
 .section.narrow { width: min(860px, calc(100% - 40px)); }
 .section.compact { padding-top: 75px; padding-bottom: 75px; }
+.section.subsection { padding-top: 70px; padding-bottom: 70px; }
 
-/* Subsections (e.g. "Influence Is Not the Same as Usefulness", "What Happens to the
-   Planner Under RL?") are nested inside a parent topic rather than numbered as their
-   own top-level chapter. */
-.section.subsection {
-  padding-top: 70px;
-  padding-bottom: 70px;
-}
 .sub-heading {
   font-family: var(--serif);
   font-size: clamp(1.7rem, 3vw, 2.3rem);
@@ -90,13 +89,32 @@ nav a:hover { color: var(--ink); }
 .section-number { color: var(--accent); font-weight: 700; margin-bottom: 10px; }
 
 h1, h2, h3 { margin: 0; letter-spacing: -.035em; }
-h1 { font-family: var(--serif); font-size: clamp(3rem, 7vw, 5.8rem); line-height: .98; max-width: 1020px; font-weight: 600; }
+
+/* [FIX 1] 标题字号缩小 */
+h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  line-height: 1.08;
+  max-width: 900px;
+  font-weight: 600;
+}
+
 h2 { font-family: var(--serif); font-size: clamp(2.2rem, 4vw, 3.4rem); line-height: 1.05; margin-bottom: 22px; font-weight: 600; }
 h3 { font-size: 1.25rem; line-height: 1.25; margin-bottom: 10px; }
 p { color: #475467; margin: 0 0 18px; }
 .hero { padding-top: 90px; padding-bottom: 90px; }
 .hero-lede { font-size: 1.22rem; max-width: 840px; margin-top: 28px; color: #344054; }
 .hero-meta { display: flex; flex-wrap: wrap; gap: 12px 24px; margin-top: 30px; color: var(--muted); font-size: .94rem; }
+
+/* [FIX 4] 导师信息行样式 */
+.hero-advisors {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: .88rem;
+  font-style: italic;
+  font-family: var(--serif);
+}
+
 .hero-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
 .button {
   display: inline-flex;
@@ -132,7 +150,6 @@ p { color: #475467; margin: 0 0 18px; }
 .state-card strong { display: block; font-size: 1.25rem; }
 .state-card span { font-size: .85rem; color: var(--muted); }
 
-/* ---------- Attention heatmap figure ---------- */
 .figure-placeholder { position: relative; margin-top: 34px; border: 1px solid var(--line); border-radius: 20px; padding: 24px; background: #fbfcfe; }
 .placeholder-title { font-weight: 700; margin-bottom: 22px; }
 
@@ -142,7 +159,6 @@ p { color: #475467; margin: 0 0 18px; }
   gap: 14px;
   align-items: start;
 }
-
 .heatmap-item {
   position: relative;
   border-radius: 14px;
@@ -150,36 +166,41 @@ p { color: #475467; margin: 0 0 18px; }
   border: 1px solid #e4e7ec;
   background: #fff;
 }
-
-.heatmap-item img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
+.heatmap-item img { display: block; width: 100%; height: auto; }
 .heatmap-item span {
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  font-weight: 700;
-  background: rgba(255,255,255,.85);
-  border: 1px solid #d0d5dd;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: .85rem;
+  position: absolute; bottom: 10px; left: 10px;
+  font-weight: 700; background: rgba(255,255,255,.85);
+  border: 1px solid #d0d5dd; padding: 6px 10px;
+  border-radius: 999px; font-size: .85rem;
 }
-
 .axis-label { color: #98a2b3; font-size: .72rem; }
 .axis-label.x { text-align: center; margin-top: 12px; }
 .axis-label.y { position: absolute; left: 8px; top: 50%; transform: rotate(-90deg) translateX(-50%); transform-origin: left top; }
-/* ---------- end heatmap figure ---------- */
 
-/* Single-image variant of .figure-placeholder, used for standalone charts like the
-   entropy interaction plot (as opposed to the 2x2 heatmap-grid above). */
+/* [FIX 3] Entropy 图缩小 + 图文并排容器 */
+.figure-text-row {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 32px;
+  align-items: start;
+  margin-top: 34px;
+}
+.figure-text-row .single-figure {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 14px;
+  border: 1px solid #e4e7ec;
+}
+.figure-text-row .figure-text {
+  padding-top: 4px;
+}
+
+/* 保留原始单图样式供其他地方使用 */
 .figure-placeholder .single-figure {
   display: block;
   width: 100%;
-  max-width: 720px;
+  max-width: 420px;
   margin: 0 auto;
   border-radius: 14px;
   border: 1px solid #e4e7ec;
@@ -191,8 +212,6 @@ p { color: #475467; margin: 0 0 18px; }
 .two-col { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 40px; margin-top: 36px; }
 .two-col.bordered > div { border: 1px solid var(--line); border-radius: 18px; padding: 26px; }
 
-/* p-value cards: kept as supporting evidence, visually quieter than the headline
-   percentage results elsewhere on the page (oracle plan, mask intervention, RL). */
 .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 34px; }
 .stat-card { padding: 16px 18px; background: var(--soft); border-radius: 14px; }
 .stat-value { font-size: 1rem; font-weight: 600; display: block; margin-bottom: 6px; color: #475467; }
@@ -200,37 +219,22 @@ p { color: #475467; margin: 0 0 18px; }
 .callout { margin-top: 34px; padding: 18px 20px; background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 10px; color: #25335e; }
 .source-note { font-size: .75rem; color: #98a2b3; margin-top: 18px; }
 
-/* Collapsible formal definitions: kept closed by default so the page reads as a research
-   narrative first; opens into a KaTeX-rendered formula for readers who want the precise
-   definition of a metric. Visually a quieter, lighter echo of the dark .formula-card. */
 .formula-details { margin-top: 16px; }
 .formula-details summary {
-  cursor: pointer;
-  list-style: none;
-  color: var(--muted);
-  font-size: .84rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  user-select: none;
+  cursor: pointer; list-style: none; color: var(--muted);
+  font-size: .84rem; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 6px; user-select: none;
 }
 .formula-details summary::-webkit-details-marker { display: none; }
 .formula-details summary::before {
-  content: "▸";
-  font-size: .7rem;
-  color: var(--accent);
-  transition: transform .15s ease;
+  content: "▸"; font-size: .7rem; color: var(--accent); transition: transform .15s ease;
 }
 .formula-details[open] summary::before { transform: rotate(90deg); }
 .formula-details summary:hover { color: var(--ink); }
 .formula-box {
-  margin-top: 12px;
-  padding: 18px 20px;
-  background: #f7f8fa;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow-x: auto;
+  margin-top: 12px; padding: 18px 20px;
+  background: #f7f8fa; border: 1px solid var(--line);
+  border-radius: 14px; overflow-x: auto;
 }
 .formula-tex { font-size: .95rem; }
 .formula-tex + .formula-tex { margin-top: 10px; }
@@ -240,12 +244,10 @@ p { color: #475467; margin: 0 0 18px; }
 .inspiration-title { color: var(--accent); font-weight: 700; margin-bottom: 10px; }
 .inspiration-box a { color: #2948b9; font-weight: 600; }
 
-/* Motivation box: the concrete backstory of why the project pivoted from reward allocation
-   to studying attention dynamics. Kept visually distinct (warm neutral) from the accent-blue
-   inspiration-box and callout boxes used elsewhere, so it reads as backstory, not as a finding. */
 .motivation-box { margin-top: 40px; padding: 26px; border: 1px solid #ece5da; border-radius: 18px; background: #fbf9f5; }
 .motivation-title { color: #8a6d3b; font-weight: 700; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .09em; font-size: .74rem; }
 .motivation-box p:last-child { margin-bottom: 0; }
+
 .method-flow { margin-top: 40px; display: grid; grid-template-columns: 1fr 80px 1fr 80px 1fr; align-items: stretch; gap: 12px; }
 .method-step { border: 1px solid var(--line); border-radius: 18px; padding: 24px; background: #fff; }
 .method-index { color: var(--accent); font-weight: 700; margin-bottom: 8px; }
@@ -318,13 +320,16 @@ td.warn { color: var(--warn); font-weight: 600; }
   .method-flow { grid-template-columns: 1fr; }
   .method-connector { transform: rotate(90deg); min-height: 30px; }
   .rl-grid { grid-template-columns: 1fr; }
+  /* [FIX 3] 平板及以下：图文并排改为堆叠 */
+  .figure-text-row { grid-template-columns: 1fr; }
+  .figure-text-row .single-figure { max-width: 100%; }
 }
 
 @media (max-width: 700px) {
   .section, .nav-wrap, .site-footer, .section.narrow { width: min(100% - 28px, var(--max)); }
   .section { padding: 76px 0; }
   .hero { padding-top: 64px; }
-  h1 { font-size: clamp(2.7rem, 14vw, 4.3rem); }
+  h1 { font-size: clamp(2rem, 10vw, 2.8rem); }
   .heatmap-grid, .two-col, .flip-grid, .ongoing-grid, .stats-grid, .state-grid, .plan-results { grid-template-columns: 1fr; }
   .insight, .insight.split { grid-template-columns: 1fr; }
   .bar-row { grid-template-columns: 115px 1fr 66px; gap: 9px; }
