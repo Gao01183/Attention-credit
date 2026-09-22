@@ -50,7 +50,7 @@ The site walks through the project in order:
 
 - **Model:** Qwen2.5-1.5B-Instruct
 - **Task:** GSM8K
-- **Attention analysis:** middle layers 9–18, top 30% of heads by cumulative attention to the Plan span ("global heads"), 320 trajectories across the four correctness states
+- **Attention analysis:** middle layers 9–18, top 30% of heads by cumulative attention to the Plan span ("Planner-Focused Heads (PFHs)"), 320 trajectories across the four correctness states
 
 ## Repository structure
 
