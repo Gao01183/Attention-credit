@@ -12,6 +12,19 @@
 </head>
 <body>
 
+<nav class="sidebar" aria-label="Section navigation">
+  <div class="sidebar-title">On this page</div>
+  <a href="#intro">Introduction</a>
+  <a href="#setting">Setting</a>
+  <a href="#agent-level">Agent-Level Credit</a>
+  <a href="#interaction">Interaction</a>
+  <a href="#tokens">Tokens</a>
+  <a href="#matter">Intervention</a>
+  <a href="#rl">RL Credit</a>
+  <a href="#learned">What I Learned</a>
+  <a href="#unresolved">Unresolved</a>
+</nav>
+
 <div class="topbar">
   <div class="topbar-inner">
     <a class="topbar-link" href="https://github.com/Gao01183/Attention-credit" target="_blank" rel="noreferrer">Repository</a>
@@ -211,9 +224,9 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 
 <h3>Quantifying Plan Tracking</h3>
 
-<p>To move beyond visual inspection, I quantified four aspects of the attention trajectory: the <strong>Diagonal Score</strong>, which measures how closely the aggregated attention mass follows an idealized Plan&#8209;to&#8209;Executor diagonal; the <strong>Centroid Tracking Error</strong>, which captures how far the center of the Executor&rsquo;s attention deviates from the expected position in the Plan; the <strong>Peak Tracking Error</strong>, which captures how far the strongest attention focus deviates from that expected position; and the <strong>Normalized FAI Profile Entropy</strong>, which summarizes how diffusely the attention mass is spread across the Plan.</p>
+<p>To move beyond visual inspection, I quantified three aspects of the attention trajectory: the <strong>Diagonal Score</strong>, which measures how closely the aggregated attention mass follows an idealized Plan&#8209;to&#8209;Executor diagonal; the <strong>Centroid Tracking Error</strong>, which captures how far the center of the Executor&rsquo;s attention deviates from the expected position in the Plan; and the <strong>Peak Tracking Error</strong>, which captures how far the strongest attention focus deviates from that expected position.</p>
 
-<p>Let the attention heatmap be \(H \in \mathbb{R}^{M \times N}\), where \(M\) is the number of Plan tokens and \(N\) is the number of Executor generation steps; the normalized Plan position and Exec position are denoted by \(\frac{i}{M-1}\) and \(\frac{j}{N-1}\), respectively. Four summary quantities follow.</p>
+<p>Let the attention heatmap be \(H \in \mathbb{R}^{M \times N}\), where \(M\) is the number of Plan tokens and \(N\) is the number of Executor generation steps; the normalized Plan position and Exec position are denoted by \(\frac{i}{M-1}\) and \(\frac{j}{N-1}\), respectively. Three summary quantities follow.</p>
 
 <div class="metric">
   <div class="metric-label">1. Centroid Tracking Error <span class="metric-sub">(centroid tracking mean absolute error)</span></div>
@@ -239,14 +252,6 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
   <p class="metric-note">Ranges in \([0, 1]\); values closer to 1 mean the attention field is concentrated tightly along the main diagonal.</p>
 </div>
 
-<div class="metric">
-  <div class="metric-label">4. Normalized FAI Profile Entropy <span class="metric-sub">(normalized attention-distribution entropy)</span></div>
-  <div class="formula">
-$$ H_{\text{FAI}} = -\sum_{k=1}^{K} p_k \ln(p_k + \epsilon) $$
-  </div>
-  <p class="metric-note">The Plan is divided into \(K\) intervals by relative position (e.g. \(K = 20\)). Here \(p_k = \frac{\sum_{i \in \text{bin}_k} \text{FAI}_i}{\sum_{m} \text{FAI}_m}\) is the share of the global attention mass contributed by the \(k\)-th interval, and \(\epsilon = 10^{-12}\) prevents \(\ln 0\). Higher entropy means the attention is spread more uniformly across the Plan; lower entropy means it concentrates on a few specific intervals.</p>
-</div>
-
 <figure class="figure" id="fig-3">
   <img class="figure-image"
        src="./images/multi_panel_figure.png"
@@ -256,12 +261,27 @@ $$ H_{\text{FAI}} = -\sum_{k=1}^{K} p_k \ln(p_k + \epsilon) $$
 
 <p>The mismatch cases were particularly informative. When the Planner was wrong but the Executor was correct (FT), the Executor deviated further from the original planning trajectory. When both were wrong (FF), the Executor followed the incorrect plan more closely &mdash; the FF condition reached a Diagonal Score of <strong>0.784</strong>, compared with <strong>0.763</strong> in FT. This leads to a simple picture:</p>
 
-<pre class="tree">Planner is wrong
-        &#9500;&#9472;&#9472; Executor follows it
-        &#9474;        &rarr; error can propagate
-        &#9474;
-        &#9492;&#9472;&#9472; Executor deviates from it
-                 &rarr; correction may occur</pre>
+<div class="tree-diagram" role="img" aria-label="Decision tree: when the Planner is wrong, either the Executor follows it and the error propagates, or the Executor deviates from it and correction may occur">
+  <div class="tree-root">Planner is wrong</div>
+  <div class="tree-lines" aria-hidden="true">
+    <span class="tree-line tree-line--center"></span>
+    <span class="tree-line tree-line--horiz"></span>
+    <span class="tree-line tree-line--left"></span>
+    <span class="tree-line tree-line--right"></span>
+    <span class="tree-arrow tree-arrow--left"></span>
+    <span class="tree-arrow tree-arrow--right"></span>
+  </div>
+  <div class="tree-branches">
+    <div class="tree-branch">
+      <div class="tree-node">Executor follows it</div>
+      <div class="tree-leaf tree-leaf--bad">&rarr; error can propagate</div>
+    </div>
+    <div class="tree-branch">
+      <div class="tree-node">Executor deviates from it</div>
+      <div class="tree-leaf tree-leaf--good">&rarr; correction may occur</div>
+    </div>
+  </div>
+</div>
 
 <p>The important point is that <strong>alignment and correctness are not the same thing</strong>. An Executor can carefully follow a bad Plan. Conversely, a successful Executor may need to depart from the Planner&rsquo;s trajectory when the Plan is flawed.</p>
 
@@ -346,21 +366,8 @@ $$ H_{\text{FAI}} = -\sum_{k=1}^{K} p_k \ln(p_k + \epsilon) $$
 
 <p>I also encountered a particularly clear shortcut during trajectory inspection. Sometimes the Planner exposes the final numerical answer directly, and the Executor responds with an extremely short output:</p>
 
-<div class="trace-pair">
-  <div class="trace">
-    <span class="trace-label">Planner</span>
-    <pre>&hellip;
-The answer is 42.</pre>
-  </div>
-  <div class="trace-arrow">&rarr;</div>
-  <div class="trace">
-    <span class="trace-label">Executor</span>
-    <pre>The final answer is 42.</pre>
-  </div>
-</div>
-
 <figure class="figure" id="fig-5">
-  <div class="copy-figure">
+  <div class="copy-figure copy-figure--h">
     <div class="copy-panel">
       <div class="copy-panel-head">
         <span class="copy-panel-title">Planner</span>
@@ -552,6 +559,8 @@ document.addEventListener("DOMContentLoaded", function () {
     throwOnError: false
   });
 
+  initSidebar();
+
   if (window.echarts) {
     try {
       initFigure4();
@@ -626,6 +635,23 @@ function initFigure6() {
   });
 
   window.addEventListener("resize", function () { chart.resize(); });
+}
+
+function initSidebar() {
+  var links = document.querySelectorAll(".sidebar a");
+  if (!links.length || !("IntersectionObserver" in window)) return;
+  var byId = {};
+  links.forEach(function (l) { byId[l.getAttribute("href").slice(1)] = l; });
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        links.forEach(function (l) { l.classList.remove("active"); });
+        var link = byId[entry.target.id];
+        if (link) link.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-15% 0px -70% 0px" });
+  document.querySelectorAll("section[id]").forEach(function (s) { observer.observe(s); });
 }
 </script>
 </body>

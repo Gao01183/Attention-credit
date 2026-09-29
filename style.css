@@ -314,6 +314,66 @@ figcaption {
   margin: 6px 0 0;
 }
 
+/* ---------- decision tree (Planner is wrong) ---------- */
+.tree-diagram {
+  max-width: 620px;
+  margin: 26px auto 30px;
+}
+.tree-root {
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid #c7d3d3;
+  border-radius: 8px;
+  padding: 9px 18px;
+  width: max-content;
+  margin: 0 auto;
+}
+.tree-lines { position: relative; height: 48px; }
+.tree-line { position: absolute; background: var(--line-strong); }
+.tree-line--center { left: 50%; top: 0; bottom: 50%; width: 1.5px; }
+.tree-line--horiz { left: 25%; right: 25%; top: 50%; height: 1.5px; }
+.tree-line--left { left: 25%; top: 50%; bottom: 7px; width: 1.5px; background: var(--warn); }
+.tree-line--right { left: 75%; top: 50%; bottom: 7px; width: 1.5px; background: #2f6b4f; }
+.tree-arrow {
+  position: absolute;
+  left: 25%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--warn);
+}
+.tree-arrow--right { left: 75%; border-top-color: #2f6b4f; }
+.tree-branches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 18px;
+}
+.tree-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.tree-node {
+  font-family: var(--sans);
+  font-size: 0.84rem;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 8px 13px;
+}
+.tree-leaf { font-family: var(--sans); font-size: 0.8rem; font-weight: 500; }
+.tree-leaf--bad { color: var(--warn); }
+.tree-leaf--good { color: #2f6b4f; }
+
 /* ---------- ECharts figures (Figure 4 & 6) ---------- */
 .fig-charts {
   display: grid;
@@ -385,6 +445,17 @@ figcaption {
   background: #fff;
 }
 .copy-heatmap-label { font-family: var(--sans); font-size: 0.76rem; color: var(--muted); margin-top: 8px; }
+
+/* horizontal variant: Planner | heatmap | Executor */
+.copy-figure--h {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(180px, 260px) minmax(0, 0.8fr);
+  align-items: center;
+  gap: 16px;
+  max-width: 100%;
+}
+.copy-figure--h .copy-trace { font-size: 0.8rem; white-space: pre-wrap; }
+.copy-figure--h .copy-heatmap-img { max-width: 100%; }
 
 /* ---------- code / trace blocks ---------- */
 pre.tree, .trace pre {
@@ -494,10 +565,49 @@ pre.tree, .trace pre {
 .footer-links a { color: var(--muted); text-decoration: none; }
 .footer-links a:hover { color: var(--accent); text-decoration: underline; }
 
+/* ---------- sidebar ---------- */
+.sidebar {
+  display: none;
+  position: fixed;
+  top: 116px;
+  left: calc(50% - 636px);
+  width: 190px;
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+@media (min-width: 1350px) {
+  .sidebar { display: block; }
+  .toc { display: none; }
+}
+.sidebar-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.sidebar a {
+  display: block;
+  color: var(--muted);
+  text-decoration: none;
+  padding: 5px 0 5px 12px;
+  border-left: 1px solid var(--line);
+}
+.sidebar a:hover { color: var(--accent); }
+.sidebar a.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  font-weight: 500;
+}
+
 /* ---------- responsive ---------- */
 @media (max-width: 760px) {
   .fig-charts { grid-template-columns: 1fr; }
   .chart { height: 300px; }
+  .copy-figure--h { grid-template-columns: 1fr; gap: 14px; }
+  .copy-figure--h .copy-heatmap-img { max-width: 320px; }
 }
 @media (max-width: 640px) {
   .masthead { padding: 40px 18px 24px; }
