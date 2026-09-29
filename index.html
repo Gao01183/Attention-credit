@@ -60,7 +60,7 @@
 
 <!-- ============ INTRODUCTION ============ -->
 <section id="intro">
-<h2>Introduction</h2>
+<h2>1. Introduction</h2>
 
 <p class="lead">A Planner&ndash;Executor system separates reasoning into two stages: a Planner proposes an intermediate plan, and an Executor uses that plan to produce the final answer. When training such a system with only a sparse terminal reward, a natural question arises:</p>
 
@@ -81,7 +81,7 @@
 
 <!-- ============ SETTING ============ -->
 <section id="setting">
-<h2>The Planner&ndash;Executor Setting</h2>
+<h2>2. The Planner&ndash;Executor Setting</h2>
 
 <p>I use <strong>Qwen2.5&#8209;1.5B&#8209;Instruct</strong> on <strong>GSM8K</strong>. The reasoning process is divided into two agents:</p>
 
@@ -118,7 +118,7 @@
 
 <blockquote class="pull-quote">Does the Plan actually matter to the Executor?</blockquote>
 
-<h3>Does the Plan Actually Matter?</h3>
+<h3>2.1 Does the Plan Actually Matter?</h3>
 
 <p>I compared four inference conditions. With <strong>No Plan</strong>, the Executor sees only the original question and reaches <strong>65.28%</strong> accuracy. With a <strong>Normal Plan</strong>, the Executor reaches <strong>64.20%</strong>. When I replace the plan with a <strong>Random Plan</strong> taken from another problem, accuracy drops dramatically to <strong>21.30%</strong>. Finally, with an <strong>Oracle Plan</strong>, the Executor reaches <strong>81.58%</strong>.</p>
 
@@ -146,7 +146,7 @@
 
 <!-- ============ AGENT-LEVEL ============ -->
 <section id="agent-level">
-<h2>Agent&#8209;Level Credit Assignment</h2>
+<h2>3. Agent&#8209;Level Credit Assignment</h2>
 
 <p>I first tested the attention idea at the <strong>agent level</strong>. Under standard GRPO, both the Planner and Executor receive the final team reward. The system reaches <strong>63.99%</strong> accuracy, compared with <strong>64.14%</strong> for the untrained Planner&ndash;Executor system.</p>
 
@@ -154,7 +154,7 @@
 
 <blockquote class="pull-quote">Can the final reward be divided between the two agents according to their apparent contribution to the downstream computation?</blockquote>
 
-<h3>Allocating Reward with Attention</h3>
+<h3>3.1 Allocating Reward with Attention</h3>
 
 <p>I used the Executor&rsquo;s attention as a proxy for how much it relied on the Planner. Let <var>A<sub>P</sub></var> denote the attention mass assigned to the Planner span and <var>A<sub>E</sub></var> the corresponding attention mass assigned to the Executor span. A simple proportional allocation is</p>
 
@@ -166,7 +166,7 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 
 <p>With this proportional attention&#8209;based allocation, however, accuracy drops to <strong>61.49%</strong>. The result made me question not whether attention contains information, but whether the particular information it provides is sufficient for agent&#8209;level credit.</p>
 
-<h3>The Problem with a Positive&#8209;Only Signal</h3>
+<h3>3.2 The Problem with a Positive&#8209;Only Signal</h3>
 
 <p>Attention weights are non&#8209;negative. This means that attention can determine <em>how</em> a reward is divided, but not directly determine whether each agent deserves positive or negative credit. Consider two mismatch cases:</p>
 
@@ -191,7 +191,7 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 
 <!-- ============ INTERACTION ============ -->
 <section id="interaction">
-<h2>Looking Inside the Interaction</h2>
+<h2>4. Looking Inside the Interaction</h2>
 
 <p>I grouped trajectories according to the correctness of the Planner and Executor:</p>
 
@@ -209,7 +209,7 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 
 <p>I then examined the Executor&#8209;to&#8209;Planner attention during Executor generation. The purpose of this experiment was not yet to assign reward &mdash; I wanted to know whether the attention patterns themselves differed systematically across the four interaction states.</p>
 
-<h3>What the Heatmaps Reveal</h3>
+<h3>4.1 What the Heatmaps Reveal</h3>
 
 <figure class="figure" id="fig-2">
   <img class="figure-image"
@@ -222,7 +222,7 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 
 <p>The pattern was especially interesting in the mismatch cases. When the Planner was wrong but the Executor was correct (<strong>FT</strong>), the Executor sometimes deviated from the trajectory suggested by the Plan. In contrast, when both Planner and Executor were wrong (<strong>FF</strong>), the Executor could continue to track the incorrect Plan closely. This suggested that the relevant distinction may not be &ldquo;does the Executor follow the Plan,&rdquo; but rather <em>how</em> the Executor follows the Plan.</p>
 
-<h3>Quantifying Plan Tracking</h3>
+<h3>4.2 Quantifying Plan Tracking</h3>
 
 <p>To move beyond visual inspection, I quantified three aspects of the attention trajectory: the <strong>Diagonal Score</strong>, which measures how closely the aggregated attention mass follows an idealized Plan&#8209;to&#8209;Executor diagonal; the <strong>Centroid Tracking Error</strong>, which captures how far the center of the Executor&rsquo;s attention deviates from the expected position in the Plan; and the <strong>Peak Tracking Error</strong>, which captures how far the strongest attention focus deviates from that expected position.</p>
 
@@ -294,7 +294,13 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
 
 <!-- ============ TOKENS ============ -->
 <section id="tokens">
-<h2>From Agents to Tokens</h2>
+<h2>5. From Agents to Tokens</h2>
+
+<h3>5.1 Prior Inspiration</h3>
+
+<p>This project is inspired by recent work showing that attention dynamics can reveal reasoning-critical tokens and support fine-grained policy optimization &mdash; <a href="https://arxiv.org/abs/2510.13554" target="_blank" rel="noreferrer">Attention Illuminates LLM Reasoning</a>.</p>
+
+<p>My study focuses on a different setting: cross-agent attention in a Planner&ndash;Executor system. The head-selection criterion and token-scoring procedure are designed for this setting and differ from the head grouping and token-scoring mechanisms used in the prior work.</p>
 
 <p>The agent&#8209;level experiment left me with a narrower question. Even if attention is not sufficient to determine how much credit the entire Planner should receive, it may still provide useful information at a finer granularity:</p>
 
@@ -302,7 +308,7 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
 
 <p>The distinction matters because agent&#8209;level credit requires compressing a complicated interaction into two numbers: one reward for the Planner and one for the Executor. Token&#8209;level credit asks a more local question. If some Planner tokens consistently receive strong downstream attention, perhaps the learning signal should be concentrated around those tokens rather than distributed uniformly across the entire Planner trajectory. I therefore shifted from using attention to divide reward between agents, to using it to weight learning signals within the Planner.</p>
 
-<h3>Estimating Attention&#8209;Based Token Influence</h3>
+<h3>5.2 Estimating Attention&#8209;Based Token Influence</h3>
 
 <p>I focus on Executor&#8209;to&#8209;Planner attention during the Executor&rsquo;s generation. Rather than treating all heads equally, I first identify heads that are particularly focused on the Planner&rsquo;s output. In the middle layers (layers 9&ndash;18), I select the top 30% of heads according to their aggregated attention mass over the Planner span. For each Planner token, I then aggregate the Executor&rsquo;s attention from these selected heads across the Executor&rsquo;s generation steps &mdash; a token&#8209;level score indicating how strongly that part of the Plan is attended to by the downstream Executor.</p>
 
@@ -321,7 +327,7 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
 
 <!-- ============ INTERVENTION ============ -->
 <section id="matter">
-<h2>Do Highly Attended Tokens Actually Matter?</h2>
+<h2>6. Do Highly Attended Tokens Actually Matter?</h2>
 
 <p>Attention magnitude alone does not establish functional importance. I therefore tested the signal through intervention. For each original trajectory, I first computed the token scores. I then selected high&#8209;scoring or low&#8209;scoring Planner tokens and masked them before running a fresh Executor generation. The scores were computed from the original trajectory and were not recomputed after masking. The reasoning is simple: if high&#8209;scoring tokens are genuinely important to downstream execution, removing them should have a larger effect than removing low&#8209;scoring tokens.</p>
 
@@ -352,7 +358,7 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
 
 <!-- ============ USEFULNESS ============ -->
 <section id="usefulness">
-<h2>Influence Is Not the Same as Usefulness</h2>
+<h2>7. Influence Is Not the Same as Usefulness</h2>
 
 <p>Not necessarily. An influential token can contain a correct inference, an incorrect inference, or a shortcut that the Executor follows too readily. This becomes visible when separating trajectories by their original outcome.</p>
 
@@ -362,7 +368,7 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
 
 <p>Attention can help answer &ldquo;what information is the Executor relying on?&rdquo; It cannot, on its own, answer &ldquo;was that information helpful?&rdquo;</p>
 
-<h3>A More Extreme Failure Mode: Answer Copying</h3>
+<h3>7.1 A More Extreme Failure Mode: Answer Copying</h3>
 
 <p>I also encountered a particularly clear shortcut during trajectory inspection. Sometimes the Planner exposes the final numerical answer directly, and the Executor responds with an extremely short output:</p>
 
@@ -403,7 +409,7 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <!-- ============ SHORTCUT UNDER RL ============ -->
 <section id="shortcut">
-<h2>A Shortcut Also Emerges Under RL</h2>
+<h2>8. A Shortcut Also Emerges Under RL</h2>
 
 <p>This issue becomes more visible after training. Comparing the base Planner with the GRPO&#8209;trained Planner, I observed the following:</p>
 
@@ -425,11 +431,11 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <!-- ============ RL ============ -->
 <section id="rl">
-<h2>Returning to Reinforcement&#8209;Learning Credit</h2>
+<h2>9. Returning to Reinforcement&#8209;Learning Credit</h2>
 
 <p>With the attention analysis and intervention results in place, I returned to the original RL question. The key distinction was now clearer. At the agent level, attention tries to answer &ldquo;how much does the Executor depend on each agent?&rdquo; At the token level, attention can instead answer &ldquo;which parts of the Planner does the Executor depend on?&rdquo; The second question is narrower, and therefore potentially easier to use as a learning signal.</p>
 
-<h3>Token&#8209;Level Weighting</h3>
+<h3>9.1 Token&#8209;Level Weighting</h3>
 
 <p>I kept the original team reward for both agents and did not perform agent&#8209;level reward allocation. Instead, I used the attention&#8209;derived Planner token scores to concentrate the Planner&rsquo;s learning signal. High&#8209;scoring Planner tokens received a <strong>1.5&times;</strong> weighting during optimization, while the overall task reward remained unchanged.</p>
 
@@ -437,7 +443,7 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <p>I do not interpret this as showing that attention directly estimates token credit. A more conservative interpretation is that a noisy estimate of downstream dependency may still be useful for deciding where to concentrate an existing task&#8209;level learning signal. The contrast with agent&#8209;level allocation is notable: <strong>63.99% &rarr; 61.49%</strong> for proportional agent&#8209;level allocation, versus <strong>63.99% &rarr; 65.73%</strong> for token&#8209;level weighting. The same underlying attention signal behaves differently when used at different levels of granularity.</p>
 
-<h3>Two Additional Controls</h3>
+<h3>9.2 Two Additional Controls</h3>
 
 <p>I also tested whether the improvement could be explained by simpler interpretations of the attention signal.</p>
 
@@ -455,15 +461,15 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <!-- ============ WHAT I LEARNED ============ -->
 <section id="learned">
-<h2>What I Learned</h2>
+<h2>10. What I Learned</h2>
 
 <p>The experiments have changed how I think about attention and credit assignment. I started with a fairly direct hypothesis: if the Executor relies heavily on the Planner, that reliance should provide information about the Planner&rsquo;s contribution to the final outcome. The experiments suggest that this intuition is only partly correct.</p>
 
-<h3>Attention reveals dependency</h3>
+<h3>10.1 Attention reveals dependency</h3>
 
 <p>The attention maps show that the Planner&ndash;Executor interaction is structured rather than random. In many trajectories, the Executor tracks different portions of the Plan as its own reasoning progresses. The intervention experiments provide stronger evidence that some highly attended Planner tokens are consequential: removing them can substantially alter downstream behavior. This makes attention a useful signal of <strong>dependency or influence</strong>.</p>
 
-<h3>But dependency does not determine credit</h3>
+<h3>10.2 But dependency does not determine credit</h3>
 
 <p>A highly attended token can contain a correct inference, an incorrect inference, or a shortcut. A Planner can be closely followed even when its Plan is wrong. An Executor can succeed by deviating from a bad Plan. A leaked answer can have substantial influence even if the Executor&rsquo;s final prediction places little attention on the Planner at that moment.</p>
 
@@ -471,7 +477,7 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <p>These are related questions, but they are not the same question.</p>
 
-<h3>Agent&#8209;level and token&#8209;level credit are different problems</h3>
+<h3>10.3 Agent&#8209;level and token&#8209;level credit are different problems</h3>
 
 <p>This is perhaps the most important lesson from the project. At the <strong>agent level</strong>, the question is who should receive credit for the final outcome &mdash; a proportional attention&#8209;based split performed poorly because it assumes that dependency can be translated directly into responsibility. At the <strong>token level</strong>, the question is where within the Planner&rsquo;s trajectory the existing learning signal should be concentrated &mdash; here, attention&#8209;based weighting produced the strongest preliminary result so far.</p>
 
@@ -485,7 +491,7 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <!-- ============ MORE PRECISE PICTURE ============ -->
 <section id="picture">
-<h2>A More Precise Picture</h2>
+<h2>11. A More Precise Picture</h2>
 
 <p>I now think about the problem as a sequence of increasingly difficult questions:</p>
 
@@ -518,7 +524,7 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <!-- ============ UNRESOLVED ============ -->
 <section id="unresolved">
-<h2>What Remains Unresolved</h2>
+<h2>12. What Remains Unresolved</h2>
 
 <p>The central question of the project is now more specific than where it started:</p>
 
