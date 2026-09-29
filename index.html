@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="description" content="Can attention help assign credit in Planner–Executor LLMs? A research essay by Mingze Gao." />
 <title>Can Attention Help Assign Credit in Planner–Executor LLMs?</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://miaoda.feishu.cn" crossorigin>
+<link href="https://miaoda.feishu.cn/fonts/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
 <link rel="stylesheet" href="style.css" />
 </head>
@@ -75,18 +74,27 @@
 
 <div class="pipeline" role="img" aria-label="Question flows to Planner, which produces a Plan, which flows to Executor, which produces the Final Answer. The Executor attends back to the Planner.">
   <div class="pipeline-row">
-    <div class="pipeline-node">Question</div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-node pipeline-node--accent">Planner</div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-node">Plan</div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-node pipeline-node--accent">Executor</div>
-    <div class="pipeline-arrow">&rarr;</div>
-    <div class="pipeline-node">Final Answer</div>
+    <div class="pipeline-inner">
+      <div class="pipeline-node">Question</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-node pipeline-node--accent">Planner</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-node">Plan</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-node pipeline-node--accent">Executor</div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-node">Final Answer</div>
+    </div>
   </div>
   <div class="pipeline-underlink">
-    <span class="pipeline-underlink-arc" aria-hidden="true"></span>
+    <svg class="pipeline-underlink-svg" viewBox="0 0 340 30" aria-hidden="true">
+      <path d="M 312 4 C 300 27, 62 27, 36 5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" marker-end="url(#pipeline-arrowhead)"/>
+      <defs>
+        <marker id="pipeline-arrowhead" viewBox="0 0 10 10" refX="3.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M 10 0 L 0 5 L 10 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+    </svg>
     <span class="pipeline-underlink-label">cross-agent attention: Executor &rarr; Planner</span>
   </div>
 </div>
@@ -203,7 +211,41 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 
 <h3>Quantifying Plan Tracking</h3>
 
-<p>To move beyond visual inspection, I quantified three aspects of the attention trajectory: the <strong>Diagonal Score</strong>, which measures how closely the aggregated attention mass follows an idealized Plan&#8209;to&#8209;Executor diagonal; the <strong>Centroid Tracking Error</strong>, which captures how far the center of the Executor&rsquo;s attention deviates from the expected position in the Plan; and the <strong>Peak Tracking Error</strong>, which captures how far the strongest attention focus deviates from that expected position.</p>
+<p>To move beyond visual inspection, I quantified four aspects of the attention trajectory: the <strong>Diagonal Score</strong>, which measures how closely the aggregated attention mass follows an idealized Plan&#8209;to&#8209;Executor diagonal; the <strong>Centroid Tracking Error</strong>, which captures how far the center of the Executor&rsquo;s attention deviates from the expected position in the Plan; the <strong>Peak Tracking Error</strong>, which captures how far the strongest attention focus deviates from that expected position; and the <strong>Normalized FAI Profile Entropy</strong>, which summarizes how diffusely the attention mass is spread across the Plan.</p>
+
+<p>Let the attention heatmap be \(H \in \mathbb{R}^{M \times N}\), where \(M\) is the number of Plan tokens and \(N\) is the number of Executor generation steps; the normalized Plan position and Exec position are denoted by \(\frac{i}{M-1}\) and \(\frac{j}{N-1}\), respectively. Four summary quantities follow.</p>
+
+<div class="metric">
+  <div class="metric-label">1. Centroid Tracking Error <span class="metric-sub">(centroid tracking mean absolute error)</span></div>
+  <div class="formula">
+$$ \text{TE}_{\text{centroid}} = \frac{1}{N} \sum_{j=0}^{N-1} \left\vert \frac{\sum_{i=0}^{M-1} i \cdot H_{i,j}}{(M-1) \sum_{i=0}^{M-1} H_{i,j}} - \frac{j}{N-1} \right\vert $$
+  </div>
+  <p class="metric-note">Measures the average distance by which the overall center of the attention mass deviates from the theoretical ideal diagonal.</p>
+</div>
+
+<div class="metric">
+  <div class="metric-label">2. Peak Tracking Error <span class="metric-sub">(focus tracking mean absolute error)</span></div>
+  <div class="formula">
+$$ \text{TE}_{\text{peak}} = \frac{1}{N} \sum_{j=0}^{N-1} \left\vert \frac{\arg\max_{i} H_{i,j}}{M-1} - \frac{j}{N-1} \right\vert $$
+  </div>
+  <p class="metric-note">Measures how far the strongest attention focus deviates from the theoretical ideal diagonal, on average.</p>
+</div>
+
+<div class="metric">
+  <div class="metric-label">3. Diagonal Score <span class="metric-sub">(diagonal alignment score)</span></div>
+  <div class="formula">
+$$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i,j} \cdot \left\vert \frac{i}{M-1} - \frac{j}{N-1} \right\vert}{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i,j}} $$
+  </div>
+  <p class="metric-note">Ranges in \([0, 1]\); values closer to 1 mean the attention field is concentrated tightly along the main diagonal.</p>
+</div>
+
+<div class="metric">
+  <div class="metric-label">4. Normalized FAI Profile Entropy <span class="metric-sub">(normalized attention-distribution entropy)</span></div>
+  <div class="formula">
+$$ H_{\text{FAI}} = -\sum_{k=1}^{K} p_k \ln(p_k + \epsilon) $$
+  </div>
+  <p class="metric-note">The Plan is divided into \(K\) intervals by relative position (e.g. \(K = 20\)). Here \(p_k = \frac{\sum_{i \in \text{bin}_k} \text{FAI}_i}{\sum_{m} \text{FAI}_m}\) is the share of the global attention mass contributed by the \(k\)-th interval, and \(\epsilon = 10^{-12}\) prevents \(\ln 0\). Higher entropy means the attention is spread more uniformly across the Plan; lower entropy means it concentrates on a few specific intervals.</p>
+</div>
 
 <figure class="figure" id="fig-3">
   <img class="figure-image"
@@ -268,9 +310,15 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 <p>The effect is even clearer when looking only at trajectories that were originally correct: masking high&#8209;scoring tokens caused <strong>31.25%</strong> of these trajectories to become incorrect, compared with <strong>3.77%</strong> under low&#8209;scoring masking.</p>
 
 <figure class="figure" id="fig-4">
-  <div class="figure-media placeholder">
-    <span class="placeholder-tag">Figure 4 &mdash; image placeholder</span>
-    <p class="placeholder-hint">Panel A：No mask / Random mask / Low&#8209;CATI mask / High&#8209;CATI mask / High&#8209;CATI retain 的 accuracy 横向 bar chart。<br>Panel B：Originally correct &rarr; flipped to wrong（High 31.25% vs Low 3.77%）与 Originally incorrect &rarr; flipped to correct（High 16.35% vs Low 4.88%）。</p>
+  <div class="fig-charts">
+    <div class="fig-chart-panel">
+      <div class="fig-panel-label">A &mdash; Executor accuracy (%)</div>
+      <div class="chart" id="fig4-a" role="img" aria-label="Executor accuracy under no mask, random mask, low-CATI mask, high-CATI mask, and high-CATI retain"></div>
+    </div>
+    <div class="fig-chart-panel">
+      <div class="fig-panel-label">B &mdash; Trajectory flip rate (%)</div>
+      <div class="chart" id="fig4-b" role="img" aria-label="Trajectory flip rates under high-CATI versus low-CATI masking"></div>
+    </div>
   </div>
   <figcaption><span class="figure-number">Figure 4.</span> Token&#8209;level intervention on GSM8K (Qwen2.5&#8209;1.5B&#8209;Instruct). (A) Executor accuracy under masking and retention conditions. (B) Trajectory flip rates under high&#8209; vs low&#8209;CATI masking.</figcaption>
 </figure>
@@ -312,11 +360,33 @@ The answer is 42.</pre>
 </div>
 
 <figure class="figure" id="fig-5">
-  <div class="figure-media placeholder">
-    <span class="placeholder-tag">Figure 5 &mdash; image placeholder</span>
-    <p class="placeholder-hint">真实 trajectory + attention overlay：Planner tokens（含 &ldquo;The answer is 42&rdquo;）与 Executor generation（&ldquo;The final answer is 42.&rdquo;）之间的 attention 连线／热力图标注。</p>
+  <div class="copy-figure">
+    <div class="copy-panel">
+      <div class="copy-panel-head">
+        <span class="copy-panel-title">Planner</span>
+        <span class="copy-panel-ctx">id 3006 &middot; Q: Gretchen&rsquo;s shop offers 100 flavors &mdash; tried 1/4 of them two years ago, double that last year; how many more to reach all 100?</span>
+      </div>
+      <pre class="copy-trace">1. Two years ago: 1/4 &times; 100 = 25
+2. Last year: 2 &times; 25 = 50
+3. Tried so far: 25 + 50 = 75
+4. Remaining: 100 &minus; 75 = 25
+
+Therefore, Gretchen needs to try 25 more
+flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
+    </div>
+
+    <div class="copy-heatmap">
+      <img class="copy-heatmap-img" src="./images/heatmap_copy.png" alt="Executor-to-Planner attention heatmap for trajectory id 3006: the Executor attends back across the Plan during generation">
+      <div class="copy-heatmap-label">Executor &rarr; Planner attention heatmap</div>
+    </div>
+
+    <div class="copy-panel">
+      <div class="copy-panel-head"><span class="copy-panel-title">Executor</span></div>
+      <pre class="copy-trace">The final answer is 25.</pre>
+      <div class="copy-note">very short output</div>
+    </div>
   </div>
-  <figcaption><span class="figure-number">Figure 5.</span> A representative answer&#8209;copying trajectory. Low Planner attention at the point of generation does not imply low Planner influence &mdash; once the leaked answer enters the Executor&rsquo;s own context, it can propagate through local context without further attention to the Planner.</figcaption>
+  <figcaption><span class="figure-number">Figure 5.</span> A representative answer&#8209;copying trajectory (id 3006). The Planner&rsquo;s concluding line exposes the answer directly, and the Executor replies with a minimal copy. Low Planner attention at the point of generation does not imply low Planner influence &mdash; once the leaked answer enters the Executor&rsquo;s own context, it can propagate through local context without further attention to the Planner.</figcaption>
 </figure>
 
 <p>Here the Executor is not carrying out the intended reasoning process; it is exploiting information that has already been exposed by the Planner. These examples also made me more cautious about interpreting attention ratios. The Executor can devote relatively little attention to the Planner at the point where it produces the final answer, even though the Planner may have introduced the decisive information earlier. This means low Planner attention at a particular generation step does not imply low overall influence of the Planner. Conversely, high Planner attention does not imply that the Planner made a positive contribution &mdash; a model can pay close attention to a useful reasoning step, but it can also pay close attention to an incorrect step.</p>
@@ -371,10 +441,7 @@ The answer is 42.</pre>
 <blockquote class="pull-quote">Detecting a problematic interaction is not the same as assigning responsibility for it.</blockquote>
 
 <figure class="figure" id="fig-6">
-  <div class="figure-media placeholder">
-    <span class="placeholder-tag">Figure 6 &mdash; image placeholder</span>
-    <p class="placeholder-hint">Vanilla GRPO 63.99% / Agent-level allocation 61.49% / Token-level weighting 65.73% / + Executor attention bonus 65.66% / + Shortcut penalty 60.27%。建议横向 bar chart，可在图下附小表格列出精确数字。</p>
-  </div>
+  <div class="chart chart--tall" id="fig6" role="img" aria-label="Accuracy under vanilla GRPO, agent-level attention allocation, token-level CATI weighting, executor attention bonus, and shortcut penalty"></div>
   <figcaption><span class="figure-number">Figure 6.</span> Accuracy under vanilla GRPO, agent&#8209;level attention allocation, token&#8209;level CATI weighting, and the two additional controls.</figcaption>
 </figure>
 </section>
@@ -474,6 +541,7 @@ The answer is 42.</pre>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
   renderMathInElement(document.body, {
@@ -483,7 +551,82 @@ document.addEventListener("DOMContentLoaded", function () {
     ],
     throwOnError: false
   });
+
+  if (window.echarts) {
+    try {
+      initFigure4();
+      initFigure6();
+    } catch (err) {
+      console.warn("Chart initialization failed:", err);
+    }
+  }
 });
+
+var CHART_TEXT = { fontFamily: "Inter, system-ui, -apple-system, sans-serif", color: "#6e6a63" };
+var AXIS_LINE = "#c9c5bb";
+var SPLIT_LINE = "#e6e3db";
+
+function initFigure4() {
+  var panelA = echarts.init(document.getElementById("fig4-a"));
+  panelA.setOption({
+    textStyle: CHART_TEXT,
+    grid: { left: 6, right: 46, top: 8, bottom: 4, containLabel: true },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: function (v) { return v.toFixed(2) + "%"; } },
+    xAxis: { type: "value", max: 70, axisLabel: { formatter: "{value}%" }, splitLine: { lineStyle: { color: SPLIT_LINE } } },
+    yAxis: { type: "category", inverse: true, data: ["No mask", "Random mask", "Low-CATI mask", "High-CATI mask", "High-CATI retain"], axisLine: { lineStyle: { color: AXIS_LINE } }, axisTick: { show: false } },
+    series: [{
+      name: "Accuracy", type: "bar", barWidth: 20,
+      data: [
+        { value: 64.26, itemStyle: { color: "#2f4858" } },
+        { value: 54.86, itemStyle: { color: "#b9b4a8" } },
+        { value: 63.58, itemStyle: { color: "#8fa8ad" } },
+        { value: 50.00, itemStyle: { color: "#8a3f2f" } },
+        { value: 64.42, itemStyle: { color: "#2f4858" } }
+      ],
+      label: { show: true, position: "right", formatter: function (p) { return p.value.toFixed(2) + "%"; }, fontWeight: 500, color: "#4a463f" }
+    }]
+  });
+
+  var panelB = echarts.init(document.getElementById("fig4-b"));
+  panelB.setOption({
+    textStyle: CHART_TEXT,
+    grid: { left: 6, right: 18, top: 34, bottom: 4, containLabel: true },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: function (v) { return v + "%"; } },
+    legend: { top: 0, itemWidth: 14, itemHeight: 10, textStyle: CHART_TEXT, data: ["High-CATI", "Low-CATI"] },
+    xAxis: { type: "category", data: ["Correct → Incorrect", "Incorrect → Correct"], axisLine: { lineStyle: { color: AXIS_LINE } }, axisTick: { show: false } },
+    yAxis: { type: "value", max: 40, axisLabel: { formatter: "{value}%" }, splitLine: { lineStyle: { color: SPLIT_LINE } } },
+    series: [
+      { name: "High-CATI", type: "bar", barWidth: 18, data: [31.25, 16.35], itemStyle: { color: "#8a3f2f" }, label: { show: true, position: "top", formatter: "{c}%", color: "#4a463f", fontWeight: 500 } },
+      { name: "Low-CATI", type: "bar", barWidth: 18, data: [3.77, 4.88], itemStyle: { color: "#2f4858" }, label: { show: true, position: "top", formatter: "{c}%", color: "#4a463f", fontWeight: 500 } }
+    ]
+  });
+
+  window.addEventListener("resize", function () { panelA.resize(); panelB.resize(); });
+}
+
+function initFigure6() {
+  var chart = echarts.init(document.getElementById("fig6"));
+  chart.setOption({
+    textStyle: CHART_TEXT,
+    grid: { left: 6, right: 62, top: 8, bottom: 4, containLabel: true },
+    tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: function (v) { return v.toFixed(2) + "%"; } },
+    xAxis: { type: "value", max: 70, axisLabel: { formatter: "{value}%" }, splitLine: { lineStyle: { color: SPLIT_LINE } } },
+    yAxis: { type: "category", inverse: true, data: ["Vanilla GRPO", "Agent-level allocation", "Token-level weighting", "+ Executor attention bonus", "+ Shortcut penalty"], axisLine: { lineStyle: { color: AXIS_LINE } }, axisTick: { show: false } },
+    series: [{
+      name: "Accuracy", type: "bar", barWidth: 22,
+      data: [
+        { value: 63.99, itemStyle: { color: "#c3bfb4" } },
+        { value: 61.49, itemStyle: { color: "#c3bfb4" } },
+        { value: 65.73, itemStyle: { color: "#2f4858" } },
+        { value: 65.66, itemStyle: { color: "#8fa8ad" } },
+        { value: 60.27, itemStyle: { color: "#8a3f2f" } }
+      ],
+      label: { show: true, position: "right", formatter: "{c}%", fontWeight: 500, color: "#4a463f" }
+    }]
+  });
+
+  window.addEventListener("resize", function () { chart.resize(); });
+}
 </script>
 </body>
 </html>
