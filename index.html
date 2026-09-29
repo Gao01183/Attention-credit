@@ -191,11 +191,10 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 <h3>What the Heatmaps Reveal</h3>
 
 <figure class="figure" id="fig-2">
-  <div class="figure-media placeholder">
-    <span class="placeholder-tag">Figure 2 &mdash; image placeholder</span>
-    <p class="placeholder-hint">TT / TF / FT / FF：Executor&rarr;Planner attention heatmaps，合成一张 2&times;2 图替换本区域（不要拆成四张卡片）。</p>
-  </div>
-  <figcaption><span class="figure-number">Figure 2.</span> Executor-to-Planner attention across four Planner&ndash;Executor correctness states. The Executor often tracks the Plan through a structured trajectory, even when the final outcome is incorrect.</figcaption>
+  <img class="figure-image"
+       src="./images/heatmap_four.png"
+       alt="Executor-to-Planner attention heatmaps under the TT, TF, FT and FF correctness states (2×2 grid)">
+  <figcaption><span class="figure-number">Figure 2.</span> Executor-to-Planner attention across four Planner–Executor correctness states. The Executor often tracks the Plan through a structured trajectory, even when the final outcome is incorrect.</figcaption>
 </figure>
 
 <p>The most obvious feature was a structured <strong>diagonal pattern</strong>. As the Executor generated successive tokens, its attention often moved through the Planner&rsquo;s output in sequence. This pattern was visible not only in successful TT trajectories, but also in unsuccessful ones. That was important: if execution failure simply meant that the Executor ignored the Planner, incorrect trajectories should have shown much weaker interaction with the Plan. Instead, the heatmaps suggested that the Executor can remain closely coupled to the Plan even when the final answer is wrong.</p>
@@ -207,10 +206,9 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
 <p>To move beyond visual inspection, I quantified three aspects of the attention trajectory: the <strong>Diagonal Score</strong>, which measures how closely the aggregated attention mass follows an idealized Plan&#8209;to&#8209;Executor diagonal; the <strong>Centroid Tracking Error</strong>, which captures how far the center of the Executor&rsquo;s attention deviates from the expected position in the Plan; and the <strong>Peak Tracking Error</strong>, which captures how far the strongest attention focus deviates from that expected position.</p>
 
 <figure class="figure" id="fig-3">
-  <div class="figure-media placeholder">
-    <span class="placeholder-tag">Figure 3 &mdash; image placeholder</span>
-    <p class="placeholder-hint">Diagonal Score / Centroid Tracking Error / Peak Tracking Error，三个 panel 合成一张 interaction plot（TT/TF/FT/FF）。</p>
-  </div>
+  <img class="figure-image"
+       src="./images/multi_panel_figure.png"
+       alt="Interaction plots of Diagonal Score, Centroid Tracking Error and Peak Tracking Error across the four Planner–Executor correctness states (TT, TF, FT, FF)">
   <figcaption><span class="figure-number">Figure 3.</span> Diagonal Score, Centroid Tracking Error, and Peak Tracking Error across the four correctness states. All three measures show a significant Planner &times; Executor interaction (Diagonal Score, <em>p</em>&nbsp;=&nbsp;0.0104; Centroid Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0065; Peak Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0013).</figcaption>
 </figure>
 
