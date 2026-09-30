@@ -62,21 +62,136 @@
 <section id="intro">
 <h2>1. Introduction</h2>
 
-<p class="lead">A Planner&ndash;Executor system separates reasoning into two stages: a Planner proposes an intermediate plan, and an Executor uses that plan to produce the final answer. When training such a system with only a sparse terminal reward, a natural question arises:</p>
+<p class="lead">A Planner&ndash;Executor system separates reasoning into two stages: a Planner proposes an intermediate plan, and an Executor uses that plan to produce the final answer. When only a sparse terminal reward is available, the training signal tells us whether the final outcome was successful, but provides little information about which part of the computation was responsible for that outcome.</p>
 
-<blockquote class="pull-quote pull-quote--lead">Who should receive credit for the final outcome, and which parts of their trajectories actually mattered?</blockquote>
+<p>This is a <strong>credit assignment</strong> problem.</p>
 
-<p>I became interested in whether the model&rsquo;s own attention could provide a signal for credit assignment.</p>
+<p>In this project, I approach it from two complementary perspectives: reinforcement-learning gradients and model interpretability.</p>
 
-<p>Intuitively, a credit assignment scheme should reflect how much each agent contributed to the final outcome. In this Planner&ndash;Executor setting, the Executor generates its solution while referring to information produced earlier by the Planner. Attention provides a direct view of this reference process: during generation, it tells us how much the model attends to different parts of the preceding context.</p>
+<h3>1.1 Why More Fine-Grained Credit?</h3>
 
-<p>This led to a natural hypothesis:</p>
+<p>Consider the policy-gradient objective for a sampled response. Ignoring clipping and normalization details, the GRPO-style objective can be written schematically as</p>
 
-<blockquote class="pull-quote">Could attention serve as a proxy for contribution, and therefore help determine how much credit each agent should receive?</blockquote>
+<div class="formula">
+$$\mathcal{L}_{\mathrm{GRPO}} = -\sum_{t=1}^{T} A\,\log \pi_\theta(o_t\mid o_{&lt;t},q),$$
+</div>
 
-<p>At first, this seemed appealing because attention exposes part of the information flow between the two agents. If the Executor relies heavily on the Planner&rsquo;s output, perhaps that reliance should be reflected in how the final reward is attributed.</p>
+<p>where <var>A</var> is the advantage computed from the outcome of the sampled response.</p>
 
-<p>There are, however, two different levels at which this question can be asked. At the <strong>agent level</strong>, we can ask how much of the final reward should go to the Planner versus the Executor. At the <strong>token level</strong>, we can ask which individual Planner tokens should receive stronger or weaker learning signals. I initially explored both.</p>
+<p>The important point for credit assignment is that, within a rollout, the same outcome-derived advantage is applied across all generated tokens. The gradient is therefore</p>
+
+<div class="formula">
+$$\nabla_\theta \mathcal{L}_{\mathrm{GRPO}} = -\sum_{t=1}^{T} A\, \nabla_\theta \log \pi_\theta(o_t\mid o_{&lt;t},q).$$
+</div>
+
+<p>The token-level gradients are of course not identical &mdash; the conditional probabilities and their parameter derivatives differ across positions &mdash; but the reward-dependent part of the learning signal is shared.</p>
+
+<p>This raises a natural question:</p>
+
+<blockquote class="pull-quote">Can we find an internal signal that tells us which tokens deserve more or less of this outcome-level learning signal?</blockquote>
+
+<p>In other words, rather than treating every token as equally responsible for the observed outcome, could we use some information from the model itself to construct a finer-grained weighting?</p>
+
+<p>Conceptually, we might write this as</p>
+
+<div class="formula">
+$$A_t = w_t A,$$
+</div>
+
+<p>where <var>A</var> is the original outcome-level advantage and <var>w<sub>t</sub></var> is a token-specific weight derived from some internal signal.</p>
+
+<p>The challenge is then to determine where <var>w<sub>t</sub></var> should come from.</p>
+
+<h3>1.2 An Interpretability Perspective</h3>
+
+<p>A natural place to look is inside the model.</p>
+
+<p>Interpretability asks questions such as:</p>
+
+<ul>
+  <li>What information is the model using?</li>
+  <li>Which parts of its context are involved in producing a particular prediction?</li>
+</ul>
+
+<p>In a Transformer, attention provides one observable view of this process. When the Executor generates a token, its attention distribution describes how its computation is distributed over the preceding context.</p>
+
+<p>In a Planner&ndash;Executor system, this creates a particularly interesting interface. The Planner produces information first:</p>
+
+<div class="formula">
+$$\text{Planner} \rightarrow \text{Plan} \rightarrow \text{Executor}.$$
+</div>
+
+<p>The Executor then consumes that information through its internal attention mechanism.</p>
+
+<p>This suggests a useful interpretability signal:</p>
+
+<div class="formula">
+$$\text{Executor attention to Planner tokens} \quad\longrightarrow\quad \text{observed downstream dependency}.$$
+</div>
+
+<p>If the Executor repeatedly attends to particular parts of the Plan, those parts may be especially involved in downstream computation.</p>
+
+<p>This does not mean that attention directly measures correctness or causal contribution. Rather, it provides a candidate signal for where information from the upstream agent enters or participates in downstream computation.</p>
+
+<p>That makes attention potentially useful for credit assignment &mdash; not because attention is itself a reward signal, but because it may provide information about where the existing reward signal should be concentrated.</p>
+
+<h3>1.3 From Interpretability to Credit Assignment</h3>
+
+<p>These two perspectives lead to the same basic idea.</p>
+
+<p>From the <strong>gradient perspective</strong>, we want:</p>
+
+<div class="formula">
+$$\text{outcome-level signal} \quad\rightarrow\quad \text{finer-grained learning signal}.$$
+</div>
+
+<p>From the <strong>interpretability perspective</strong>, we want:</p>
+
+<div class="formula">
+$$\text{internal model behavior} \quad\rightarrow\quad \text{information about computational dependency}.$$
+</div>
+
+<p>Putting them together gives the hypothesis behind this project:</p>
+
+<div class="formula">
+$$\boxed{\text{Internal dependency signal} \quad\rightarrow\quad \text{credit weighting}}$$
+</div>
+
+<p>The hope is that the model&rsquo;s own computation can provide information that is missing from a sparse terminal reward.</p>
+
+<p>There are two natural levels at which to apply this idea.</p>
+
+<p>At the <strong>agent level</strong>, we can ask:</p>
+
+<div class="formula">
+$$\boxed{\text{How much credit should the Planner receive, and how much should the Executor receive?}}$$
+</div>
+
+<p>At the <strong>token level</strong>, we can ask:</p>
+
+<div class="formula">
+$$\boxed{\text{Which parts of the Planner's trajectory should receive stronger or weaker learning signals?}}$$
+</div>
+
+<p>These are related, but they are not the same problem.</p>
+
+<p>A useful internal signal might be informative at one level and unreliable at another.</p>
+
+<p>That distinction became central to the experiments that followed.</p>
+
+<h3>1.4 The Initial Hypothesis</h3>
+
+<p>The initial hypothesis was therefore deliberately simple:</p>
+
+<blockquote class="pull-quote">If attention reveals where the downstream Executor depends on the upstream Planner, perhaps it can be used as a signal for finer-grained credit assignment.</blockquote>
+
+<p>At the agent level, attention could potentially estimate relative contribution and guide reward allocation.</p>
+
+<p>At the token level, attention could potentially identify Planner tokens whose learning signals should be emphasized.</p>
+
+<p>I initially explored both directions.</p>
+
+<p>The experiments, however, revealed that the distinction between dependency, influence, usefulness, and credit is more important than I first expected.</p>
 </section>
 
 <!-- ============ SETTING ============ -->
@@ -215,7 +330,7 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
   <img class="figure-image"
        src="./images/heatmap_four.png"
        alt="Executor-to-Planner attention heatmaps under the TT, TF, FT and FF correctness states (2×2 grid)">
-  <figcaption><span class="figure-number">Figure 2.</span> Executor-to-Planner attention across four Planner–Executor correctness states. For each category, I only selected valid samples whose executor output contains more than 20 characters. The Executor often tracks the Plan through a structured trajectory, even when the final outcome is incorrect.</figcaption>
+  <figcaption><span class="figure-number">Figure 2.</span> Executor-to-Planner attention across four Planner–Executor correctness states. The Executor often tracks the Plan through a structured trajectory, even when the final outcome is incorrect.</figcaption>
 </figure>
 
 <p>The most obvious feature was a structured <strong>diagonal pattern</strong>. As the Executor generated successive tokens, its attention often moved through the Planner&rsquo;s output in sequence. This pattern was visible not only in successful TT trajectories, but also in unsuccessful ones. That was important: if execution failure simply meant that the Executor ignored the Planner, incorrect trajectories should have shown much weaker interaction with the Plan. Instead, the heatmaps suggested that the Executor can remain closely coupled to the Plan even when the final answer is wrong.</p>
@@ -256,7 +371,7 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
   <img class="figure-image"
        src="./images/multi_panel_figure.png"
        alt="Interaction plots of Diagonal Score, Centroid Tracking Error and Peak Tracking Error across the four Planner–Executor correctness states (TT, TF, FT, FF)">
-  <figcaption><span class="figure-number">Figure 3.</span> Diagonal Score, Centroid Tracking Error, and Peak Tracking Error across the four correctness states. All three measures show a significant Planner &times; Executor interaction (Diagonal Score, <em>p</em>&nbsp;=&nbsp;0.0104; Centroid Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0065; Peak Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0013). Partial <em>&eta;</em><sup>2</sup> values are approximately 0.01&ndash;0.03 across the reported attention-dynamics analyses.</figcaption>
+  <figcaption><span class="figure-number">Figure 3.</span> Diagonal Score, Centroid Tracking Error, and Peak Tracking Error across the four correctness states. All three measures show a significant Planner &times; Executor interaction (Diagonal Score, <em>p</em>&nbsp;=&nbsp;0.0104; Centroid Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0065; Peak Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0013).</figcaption>
 </figure>
 
 <p>The mismatch cases were particularly informative. When the Planner was wrong but the Executor was correct (FT), the Executor deviated further from the original planning trajectory. When both were wrong (FF), the Executor followed the incorrect plan more closely &mdash; the FF condition reached a Diagonal Score of <strong>0.784</strong>, compared with <strong>0.763</strong> in FT. This leads to a simple picture:</p>
