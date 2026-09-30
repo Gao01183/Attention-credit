@@ -50,7 +50,7 @@
 
   <div class="byline">
     <div class="byline-row"><span class="byline-label">Author</span>Mingze Gao &mdash; Nanjing University, School of Artificial Intelligence</div>
-    <div class="byline-row"><span class="byline-label">Advisors</span>Junbo Li, Peihao Wang &mdash; UT Austin</div>
+    <div class="byline-row"><span class="byline-label">Research collaborators</span>Junbo Li, Peihao Wang &mdash; UT Austin</div>
     <div class="byline-row"><span class="byline-label">Status</span>Ongoing &middot; 2026 &middot; results below are preliminary and will be updated as the study develops</div>
   </div>
 </header>
@@ -393,6 +393,14 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
 
 <p>I focus on Executor&#8209;to&#8209;Planner attention during the Executor&rsquo;s generation. Rather than treating all heads equally, I first identify heads that are particularly focused on the Planner&rsquo;s output. In the middle layers (layers 9&ndash;18), I select the top 30% of heads according to their aggregated attention mass over the Planner span. For each Planner token, I then aggregate the Executor&rsquo;s attention from these selected heads across the Executor&rsquo;s generation steps &mdash; a token&#8209;level score indicating how strongly that part of the Plan is attended to by the downstream Executor.</p>
 
+<p>For each Planner token <var>i</var>, the resulting score &mdash; the <strong>Cross-Agent Token Influence</strong> (CATI) &mdash; is</p>
+
+<div class="formula">
+$$s_i = \frac{1}{|S|} \sum_{(l,h) \in S} \sum_{j=1}^{N} a_{j,i}^{(l,h)},$$
+</div>
+
+<p>where <var>S</var> is the set of selected <var>(l,h)</var> head pairs, <var>N</var> is the number of Executor generation steps, and <var>a<sub>j,i</sub><sup>(l,h)</sup></var> is the attention from Executor step <var>j</var> to Planner token <var>i</var> in head <var>(l,h)</var>.</p>
+
 <div class="mini-pipeline">
   <span>Executor&rarr;Planner attention</span>
   <span class="mini-pipeline-arrow">&rarr;</span>
@@ -520,6 +528,20 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <p>I kept the original team reward for both agents and did not perform agent&#8209;level reward allocation. Instead, I used the attention&#8209;derived Planner token scores to concentrate the Planner&rsquo;s learning signal. High&#8209;scoring Planner tokens received a <strong>1.5&times;</strong> weighting during optimization, while the overall task reward remained unchanged.</p>
 
+<p>Formally, let <var>s</var> denote the CATI scores defined in Section 5.2. Each Planner token <var>i</var> receives the weight</p>
+
+<div class="formula">
+$$w_i = \begin{cases} 1.5, & i \in \mathrm{Top}_{30\%}(s), \\ 1, & \text{otherwise}, \end{cases}$$
+</div>
+
+<p>and the outcome-level advantage is then rescaled per token as</p>
+
+<div class="formula">
+$$A_i = w_i \cdot A,$$
+</div>
+
+<p>where <var>A</var> is the original advantage from the sampled outcome.</p>
+
 <p>This produced the strongest result among the attention&#8209;based variants tested so far: <span class="highlight-number">65.73%</span>, compared with <strong>63.99%</strong> for vanilla GRPO &mdash; a <strong>+1.74</strong> percentage&#8209;point improvement.</p>
 
 <p>I do not interpret this as showing that attention directly estimates token credit. A more conservative interpretation is that a noisy estimate of downstream dependency may still be useful for deciding where to concentrate an existing task&#8209;level learning signal. The contrast with agent&#8209;level allocation is notable: <strong>63.99% &rarr; 61.49%</strong> for proportional agent&#8209;level allocation, versus <strong>63.99% &rarr; 65.73%</strong> for token&#8209;level weighting. The same underlying attention signal behaves differently when used at different levels of granularity.</p>
@@ -554,7 +576,11 @@ flavors this year. <span class="leak-tag">&uarr; leaked answer</span></pre>
 
 <p>A highly attended token can contain a correct inference, an incorrect inference, or a shortcut. A Planner can be closely followed even when its Plan is wrong. An Executor can succeed by deviating from a bad Plan. A leaked answer can have substantial influence even if the Executor&rsquo;s final prediction places little attention on the Planner at that moment.</p>
 
-<p class="formula-text">dependency &#8603; usefulness &#8603; credit.</p>
+<p class="formula-text">dependency &#8603; usefulness.</p>
+
+<p class="formula-text">usefulness &#8603; credit.</p>
+
+<p>Knowing what the Executor depends on does not tell us whether that information was helpful, and knowing that information was helpful does not by itself determine how credit should be assigned.</p>
 
 <p>These are related questions, but they are not the same question.</p>
 
