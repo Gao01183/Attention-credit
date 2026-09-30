@@ -137,47 +137,13 @@ $$\text{Executor attention to Planner tokens} \quad\longrightarrow\quad \text{ob
 
 <h3>1.3 From Interpretability to Credit Assignment</h3>
 
-<p>These two perspectives lead to the same basic idea.</p>
+<p>These two perspectives lead to the same basic idea. From the gradient perspective, the goal is to turn an outcome-level signal into a finer-grained learning signal; from the interpretability perspective, it is to turn internal model behavior into information about computational dependency.</p>
 
-<p>From the <strong>gradient perspective</strong>, we want:</p>
+<p>Putting them together gives the hypothesis behind this project: the model&rsquo;s own computation may provide an internal dependency signal that can inform credit weighting &mdash; information that a sparse terminal reward does not contain.</p>
 
-<div class="formula">
-$$\text{outcome-level signal} \quad\rightarrow\quad \text{finer-grained learning signal}.$$
-</div>
+<p>There are two natural levels at which to apply this idea. At the <strong>agent level</strong>, we can ask how much credit the Planner should receive and how much the Executor should receive. At the <strong>token level</strong>, we can ask which parts of the Planner&rsquo;s trajectory should receive stronger or weaker learning signals.</p>
 
-<p>From the <strong>interpretability perspective</strong>, we want:</p>
-
-<div class="formula">
-$$\text{internal model behavior} \quad\rightarrow\quad \text{information about computational dependency}.$$
-</div>
-
-<p>Putting them together gives the hypothesis behind this project:</p>
-
-<div class="formula">
-$$\boxed{\text{Internal dependency signal} \quad\rightarrow\quad \text{credit weighting}}$$
-</div>
-
-<p>The hope is that the model&rsquo;s own computation can provide information that is missing from a sparse terminal reward.</p>
-
-<p>There are two natural levels at which to apply this idea.</p>
-
-<p>At the <strong>agent level</strong>, we can ask:</p>
-
-<div class="formula">
-$$\boxed{\text{How much credit should the Planner receive, and how much should the Executor receive?}}$$
-</div>
-
-<p>At the <strong>token level</strong>, we can ask:</p>
-
-<div class="formula">
-$$\boxed{\text{Which parts of the Planner's trajectory should receive stronger or weaker learning signals?}}$$
-</div>
-
-<p>These are related, but they are not the same problem.</p>
-
-<p>A useful internal signal might be informative at one level and unreliable at another.</p>
-
-<p>That distinction became central to the experiments that followed.</p>
+<p>These are related, but they are not the same problem. A useful internal signal might be informative at one level and unreliable at another. That distinction became central to the experiments that followed.</p>
 
 <h3>1.4 The Initial Hypothesis</h3>
 
@@ -330,7 +296,7 @@ $$R_P = R\frac{A_P}{A_P+A_E}, \qquad R_E = R\frac{A_E}{A_P+A_E},$$
   <img class="figure-image"
        src="./images/heatmap_four.png"
        alt="Executor-to-Planner attention heatmaps under the TT, TF, FT and FF correctness states (2×2 grid)">
-  <figcaption><span class="figure-number">Figure 2.</span> Executor-to-Planner attention across four Planner–Executor correctness states. The Executor often tracks the Plan through a structured trajectory, even when the final outcome is incorrect.</figcaption>
+  <figcaption><span class="figure-number">Figure 2.</span> Executor-to-Planner attention across four Planner–Executor correctness states. For each category, I only selected valid samples whose executor output contains more than 20 characters. The Executor often tracks the Plan through a structured trajectory, even when the final outcome is incorrect.</figcaption>
 </figure>
 
 <p>The most obvious feature was a structured <strong>diagonal pattern</strong>. As the Executor generated successive tokens, its attention often moved through the Planner&rsquo;s output in sequence. This pattern was visible not only in successful TT trajectories, but also in unsuccessful ones. That was important: if execution failure simply meant that the Executor ignored the Planner, incorrect trajectories should have shown much weaker interaction with the Plan. Instead, the heatmaps suggested that the Executor can remain closely coupled to the Plan even when the final answer is wrong.</p>
@@ -371,7 +337,7 @@ $$ \text{Score}_{\text{diag}} = 1 - \frac{\sum_{i=0}^{M-1} \sum_{j=0}^{N-1} H_{i
   <img class="figure-image"
        src="./images/multi_panel_figure.png"
        alt="Interaction plots of Diagonal Score, Centroid Tracking Error and Peak Tracking Error across the four Planner–Executor correctness states (TT, TF, FT, FF)">
-  <figcaption><span class="figure-number">Figure 3.</span> Diagonal Score, Centroid Tracking Error, and Peak Tracking Error across the four correctness states. All three measures show a significant Planner &times; Executor interaction (Diagonal Score, <em>p</em>&nbsp;=&nbsp;0.0104; Centroid Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0065; Peak Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0013).</figcaption>
+  <figcaption><span class="figure-number">Figure 3.</span> Diagonal Score, Centroid Tracking Error, and Peak Tracking Error across the four correctness states. All three measures show a significant Planner &times; Executor interaction (Diagonal Score, <em>p</em>&nbsp;=&nbsp;0.0104; Centroid Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0065; Peak Tracking Error, <em>p</em>&nbsp;=&nbsp;0.0013). Partial <em>&eta;</em><sup>2</sup> values are approximately 0.01&ndash;0.03 across the reported attention-dynamics analyses.</figcaption>
 </figure>
 
 <p>The mismatch cases were particularly informative. When the Planner was wrong but the Executor was correct (FT), the Executor deviated further from the original planning trajectory. When both were wrong (FF), the Executor followed the incorrect plan more closely &mdash; the FF condition reached a Diagonal Score of <strong>0.784</strong>, compared with <strong>0.763</strong> in FT. This leads to a simple picture:</p>
